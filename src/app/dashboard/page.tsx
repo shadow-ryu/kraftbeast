@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
-import { Github, RefreshCw, ExternalLink, Star } from 'lucide-react'
+import { Github, ExternalLink, Star } from 'lucide-react'
 import { VisibilityToggle } from '@/components/visibility-toggle'
+import SyncButton from '@/components/sync-button'
 
 export default async function DashboardPage() {
   const { userId } = await auth()
@@ -124,12 +125,7 @@ export default async function DashboardPage() {
               <Github className="h-5 w-5" />
               <span className="font-medium">GitHub Connected: @{dbUser.githubHandle}</span>
             </div>
-            <form action="/api/github/sync" method="POST">
-              <Button type="submit" size="lg">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Sync Repos
-              </Button>
-            </form>
+            <SyncButton />
           </div>
         )}
 
@@ -146,13 +142,16 @@ export default async function DashboardPage() {
               </Card>
             ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {dbUser?.repos.map((repo: { id: string; name: string; description: string | null; stars: number; commits: number; language: string | null; isPrivate: boolean; isVisible: boolean; url: string }) => (
+              {dbUser?.repos.map((repo: { id: string; name: string; description: string | null; stars: number; commits: number; language: string | null; isPrivate: boolean; isVisible: boolean; isFork?: boolean; url: string }) => (
                 <Card key={repo.id} className="p-4 hover:shadow-md transition-shadow relative">
                   <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold">{repo.name}</h3>
                       {repo.isPrivate && (
-                        <Badge variant="outline" className="text-xs">Private</Badge>
+                        <Badge variant="outline" className="text-xs">👾 Private</Badge>
+                      )}
+                      {repo.isFork && (
+                        <Badge variant="outline" className="text-xs bg-gray-50 text-gray-600 border-gray-300">🍴 Forked</Badge>
                       )}
                     </div>
                     <Badge variant="secondary" className="flex items-center gap-1">

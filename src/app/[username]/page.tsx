@@ -28,8 +28,11 @@ export default async function PortfolioPage({
         orderBy: { order: 'asc' }
       },
       timeline: {
+        where: {
+          hidden: false
+        },
         orderBy: { timestamp: 'desc' },
-        take: 20
+        take: 50
       }
     }
   })
@@ -109,6 +112,36 @@ export default async function PortfolioPage({
                   </div>
                 </div>
               </div>
+            </Card>
+
+            {/* Ship Timeline Section */}
+            <Card className="bg-[#1a1a1a] border-[#1a1a1a] p-6 mt-4">
+              <h3 className="text-xl font-bold text-white text-center mb-4">Ship Timeline</h3>
+              {user.timeline.length > 0 ? (
+                <ul className="flex flex-col gap-2 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-[#00ff88] scrollbar-track-[#0a0a0a]">
+                  {user.timeline.map((entry: { id: string; repoName: string; message: string; timestamp: Date }) => (
+                    <li 
+                      key={entry.id}
+                      className="border-l-2 border-[#00ff88] pl-3 py-1.5 font-mono text-xs text-[#cccccc]"
+                    >
+                      <div className="text-white font-semibold">{entry.repoName}</div>
+                      <div className="text-[#00ff88] text-[10px]">
+                        {new Date(entry.timestamp).toLocaleTimeString('en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true
+                        })}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-6xl mb-3">🚀</div>
+                  <p className="text-[#a0a0a0] text-sm font-mono">No ships yet...</p>
+                  <p className="text-[#666] text-xs mt-1">Push some code to see it here!</p>
+                </div>
+              )}
             </Card>
           </div>
 

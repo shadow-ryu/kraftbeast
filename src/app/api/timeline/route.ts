@@ -20,7 +20,10 @@ export async function GET(request: Request) {
     }
 
     const timeline = await prisma.timeline.findMany({
-      where: { userId: user.id },
+      where: { 
+        userId: user.id,
+        hidden: false
+      },
       orderBy: { timestamp: 'desc' },
       take: 50
     })

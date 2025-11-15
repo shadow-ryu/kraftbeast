@@ -117,6 +117,7 @@ export async function POST() {
           language: repo.language,
           languages: languages,
           isPrivate: repo.private,
+          isFork: repo.fork || false,
         },
         create: {
           userId: dbUser.id,
@@ -130,6 +131,7 @@ export async function POST() {
           languages: languages,
           isPrivate: repo.private,
           isVisible: !repo.private, // Public repos visible by default, private hidden
+          isFork: repo.fork || false,
         }
       })
     }

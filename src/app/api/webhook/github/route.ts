@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
       const description = data.repository.description
       const language = data.repository.language
       const isPrivate = data.repository.private
+      const isFork = data.repository.fork || false
 
       // Find user by GitHub handle
       const githubHandle = data.repository.owner.login
@@ -61,6 +62,7 @@ export async function POST(request: NextRequest) {
           description,
           language,
           isPrivate,
+          isFork,
           commits: { increment: data.commits?.length || 1 }
         },
         create: {
@@ -73,6 +75,7 @@ export async function POST(request: NextRequest) {
           url: repoUrl,
           language,
           isPrivate,
+          isFork,
           isVisible: !isPrivate, // Public repos visible by default
         }
       })
@@ -83,11 +86,13 @@ export async function POST(request: NextRequest) {
           userId: user.id,
           repoName,
           message: commit.message,
-          timestamp: new Date(commit.timestamp)
+          timestamp: new Date(commit.timestamp),
+          hidden: false
         }))
 
         await prisma.timeline.createMany({
-          data: timelineEntries
+          data: timelineEntries,
+          skipDuplicates: true
         })
       }
 
@@ -130,6 +135,7 @@ export async function POST(request: NextRequest) {
             url: data.repository.html_url,
             language: data.repository.language,
             isPrivate: data.repository.private,
+            isFork: data.repository.fork || false,
             isVisible: !data.repository.private, // Public repos visible by default
           }
         })

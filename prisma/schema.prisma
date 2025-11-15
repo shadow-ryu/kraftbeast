@@ -20,6 +20,7 @@ model Repo {
   languages   Json?
   isPrivate   Boolean  @default(false)
   isVisible   Boolean  @default(true)
+  isFork      Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   user        User     @relation("UserRepos", fields: [userId], references: [id], onDelete: Cascade)
@@ -69,6 +70,7 @@ model Timeline {
   repoName    String
   message     String
   timestamp   DateTime
+  hidden      Boolean  @default(false)
   createdAt   DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 

@@ -18,6 +18,7 @@ interface RepoCardProps {
     language: string | null
     languages: Record<string, number> | null
     isPrivate: boolean
+    isFork?: boolean
   }
   githubHandle: string
   defaultTab?: string
@@ -53,6 +54,12 @@ export default function RepoCard({ repo, githubHandle, defaultTab = 'readme' }: 
               <Badge variant="outline" className="flex items-center gap-1 text-xs">
                 <span>👾</span>
                 Private
+              </Badge>
+            )}
+            {repo.isFork && (
+              <Badge variant="outline" className="flex items-center gap-1 text-xs bg-gray-50 text-gray-600 border-gray-300">
+                <span>🍴</span>
+                Forked
               </Badge>
             )}
           </div>
