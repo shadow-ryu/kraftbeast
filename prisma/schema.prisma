@@ -17,6 +17,7 @@ model Repo {
   lastPushed  DateTime
   url         String
   language    String?
+  languages   Json?
   isPrivate   Boolean  @default(false)
   isVisible   Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -39,6 +40,7 @@ model User {
   twitterHandle   String?
   linkedinUrl     String?
   forwardEmail    String?
+  defaultRepoView String        @default("readme")
   visits          Int           @default(0)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt

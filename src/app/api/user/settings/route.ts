@@ -10,13 +10,14 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json()
-    const { twitterHandle, forwardEmail } = body
+    const { twitterHandle, forwardEmail, defaultRepoView } = body
 
     const user = await prisma.user.update({
       where: { clerkId: userId },
       data: {
         ...(twitterHandle !== undefined && { twitterHandle: twitterHandle || null }),
-        ...(forwardEmail !== undefined && { forwardEmail: forwardEmail || null })
+        ...(forwardEmail !== undefined && { forwardEmail: forwardEmail || null }),
+        ...(defaultRepoView !== undefined && { defaultRepoView })
       }
     })
 

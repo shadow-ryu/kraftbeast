@@ -25,6 +25,7 @@ interface SettingsContentProps {
     githubConnected: boolean
     twitterHandle: string | null
     forwardEmail: string | null
+    defaultRepoView: string
   }
   repos: Repo[]
 }
@@ -33,6 +34,7 @@ export default function SettingsContent({ user, repos }: SettingsContentProps) {
   const router = useRouter()
   const [twitterHandle, setTwitterHandle] = useState(user.twitterHandle || '')
   const [forwardEmail, setForwardEmail] = useState(user.forwardEmail || '')
+  const [defaultRepoView, setDefaultRepoView] = useState(user.defaultRepoView || 'readme')
   const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
@@ -44,7 +46,7 @@ export default function SettingsContent({ user, repos }: SettingsContentProps) {
       const response = await fetch('/api/user/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ twitterHandle, forwardEmail }),
+        body: JSON.stringify({ twitterHandle, forwardEmail, defaultRepoView }),
       })
 
       if (response.ok) {
@@ -321,6 +323,23 @@ export default function SettingsContent({ user, repos }: SettingsContentProps) {
                 onChange={(e) => setForwardEmail(e.target.value)}
                 placeholder="your@email.com"
               />
+            </div>
+
+            <div>
+              <Label htmlFor="defaultRepoView">Default Private Repo View</Label>
+              <p className="text-sm text-neutral-600 mb-2">
+                Choose which tab opens first when viewing private repositories
+              </p>
+              <select
+                id="defaultRepoView"
+                value={defaultRepoView}
+                onChange={(e) => setDefaultRepoView(e.target.value)}
+                className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-900"
+              >
+                <option value="readme">README</option>
+                <option value="files">Files</option>
+                <option value="description">Description</option>
+              </select>
             </div>
 
             <Button 

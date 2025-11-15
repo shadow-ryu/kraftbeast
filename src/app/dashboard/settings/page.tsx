@@ -60,7 +60,8 @@ export default async function SettingsPage() {
             githubHandle: dbUser?.githubHandle || null,
             githubConnected: dbUser?.githubConnected || false,
             twitterHandle: (dbUser as any)?.twitterHandle || null,
-            forwardEmail: (dbUser as unknown)?.forwardEmail || null,
+            forwardEmail: (dbUser as any)?.forwardEmail || null,
+            defaultRepoView: (dbUser as unknown)?.defaultRepoView || 'readme',
           }}
           repos={dbUser?.repos || []}
         />

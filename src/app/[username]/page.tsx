@@ -2,8 +2,9 @@ import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Github, Star, GitCommit, ExternalLink, Eye, Twitter, Mail, Briefcase, Clock } from 'lucide-react'
+import { Github, ExternalLink, Eye, Twitter, Mail, Briefcase, Clock, GitCommit } from 'lucide-react'
 import ContactForm from '@/components/contact-form'
+import RepoCard from '@/components/repo-card'
 
 export default async function PortfolioPage({ 
   params 
@@ -166,44 +167,12 @@ export default async function PortfolioPage({
               ) : (
                 <div className="grid md:grid-cols-2 gap-6">
                   {user.repos.map((repo: any) => (
-                    <Card key={repo.id} className="p-6 hover:shadow-lg transition-shadow">
-                      <div className="flex justify-between items-start mb-3">
-                        <h3 className="text-xl font-semibold">{repo.name}</h3>
-                        <Badge variant="secondary" className="flex items-center gap-1">
-                          <Star className="h-3 w-3 fill-current" />
-                          {repo.stars}
-                        </Badge>
-                      </div>
-                      
-                      <p className="text-neutral-600 mb-4 min-h-[3rem]">
-                        {repo.description || 'No description provided'}
-                      </p>
-
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {repo.language && (
-                          <Badge variant="outline">{repo.language}</Badge>
-                        )}
-                        <Badge variant="outline" className="flex items-center gap-1">
-                          <GitCommit className="h-3 w-3" />
-                          {repo.commits} commits
-                        </Badge>
-                      </div>
-
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-neutral-500">
-                          Updated {new Date(repo.lastPushed).toLocaleDateString()}
-                        </span>
-                        <a 
-                          href={repo.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline flex items-center gap-1"
-                        >
-                          View
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      </div>
-                    </Card>
+                    <RepoCard 
+                      key={repo.id} 
+                      repo={repo} 
+                      githubHandle={username}
+                      defaultTab={(user as any).defaultRepoView || 'readme'}
+                    />
                   ))}
                 </div>
               )}
@@ -218,7 +187,7 @@ export default async function PortfolioPage({
                 </div>
                 <Card className="p-6">
                   <div className="space-y-4">
-                    {user.timeline.map((entry: any) => (
+                    {user.timeline.map((entry: unknown) => (
                       <div key={entry.id} className="flex gap-4 pb-4 border-b last:border-b-0 last:pb-0">
                         <div className="flex-shrink-0">
                           <GitCommit className="h-5 w-5 text-neutral-500" />
