@@ -1,5 +1,6 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
+import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -13,7 +14,8 @@ export default async function ProfilePage() {
 
   const user = await currentUser()
   
-  let dbUser = await prisma.user.findUnique({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let dbUser: any = await (prisma.user.findUnique as any)({
     where: { email: user?.emailAddresses[0]?.emailAddress },
     include: { 
       workHistory: { orderBy: { order: 'asc' } }
@@ -22,7 +24,8 @@ export default async function ProfilePage() {
 
   if (!dbUser && user?.emailAddresses[0]?.emailAddress) {
     const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || null
-    dbUser = await prisma.user.create({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    dbUser = await (prisma.user.create as any)({
       data: {
         clerkId: userId,
         email: user.emailAddresses[0].emailAddress,
@@ -60,10 +63,12 @@ export default async function ProfilePage() {
                 Settings
               </Button>
             </Link>
-            <img 
-              src={user?.imageUrl} 
+            <Image 
+              src={user?.imageUrl || '/placeholder-avatar.png'} 
               alt={user?.firstName || 'User'} 
-              className="h-8 w-8 rounded-full"
+              width={32}
+              height={32}
+              className="rounded-full"
             />
           </div>
         </div>

@@ -32,7 +32,7 @@ export default function ContactForm({ username }: { username: string }) {
       } else {
         setStatus('error')
       }
-    } catch (error) {
+    } catch {
       setStatus('error')
     }
   }

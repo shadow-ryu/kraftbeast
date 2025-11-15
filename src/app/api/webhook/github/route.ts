@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
 
       // Add timeline entries for commits
       if (data.commits && data.commits.length > 0) {
-        const timelineEntries = data.commits.map((commit: any) => ({
+        const timelineEntries = data.commits.map((commit: { message: string; timestamp: string }) => ({
           userId: user.id,
           repoName,
           message: commit.message,

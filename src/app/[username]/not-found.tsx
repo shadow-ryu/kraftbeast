@@ -10,7 +10,7 @@ export default function PortfolioNotFound() {
         <UserX className="h-16 w-16 mx-auto mb-4 text-neutral-400" />
         <h1 className="text-2xl font-bold mb-2">Portfolio Not Found</h1>
         <p className="text-neutral-600 mb-6">
-          This user doesn't exist or hasn't set up their KraftBeast portfolio yet.
+          This user doesn&apos;t exist or hasn&apos;t set up their KraftBeast portfolio yet.
         </p>
         <Link href="/">
           <Button>Go Home</Button>

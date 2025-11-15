@@ -1,5 +1,6 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
+import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -53,10 +54,12 @@ export default async function DashboardPage() {
                 </Button>
               </Link>
             )}
-            <img 
-              src={user?.imageUrl} 
+            <Image 
+              src={user?.imageUrl || '/placeholder-avatar.png'} 
               alt={user?.firstName || 'User'} 
-              className="h-8 w-8 rounded-full"
+              width={32}
+              height={32}
+              className="rounded-full"
             />
           </div>
         </div>
@@ -93,7 +96,7 @@ export default async function DashboardPage() {
           </Card>
           <Card className="p-6">
             <div className="text-2xl font-bold">
-              {dbUser?.repos.reduce((sum: number, repo: any) => sum + repo.stars, 0) || 0}
+              {dbUser?.repos.reduce((sum: number, repo: { stars: number }) => sum + repo.stars, 0) || 0}
             </div>
             <div className="text-neutral-600">Total Stars</div>
           </Card>
@@ -107,12 +110,13 @@ export default async function DashboardPage() {
             <p className="text-neutral-600 mb-6">
               Connect your GitHub account to automatically sync your repositories and build your portfolio.
             </p>
-            <a href="/api/auth/github/connect">
-              <Button size="lg">
-                <Github className="h-5 w-5 mr-2" />
-                Connect GitHub Account
-              </Button>
-            </a>
+            <Button 
+              size="lg"
+              onClick={() => window.location.href = '/api/auth/github/connect'}
+            >
+              <Github className="h-5 w-5 mr-2" />
+              Connect GitHub Account
+            </Button>
           </Card>
         ) : (
           <div className="mb-6 flex items-center gap-4">
@@ -142,7 +146,7 @@ export default async function DashboardPage() {
               </Card>
             ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {dbUser?.repos.map((repo: any) => (
+              {dbUser?.repos.map((repo: { id: string; name: string; description: string | null; stars: number; commits: number; language: string | null; isPrivate: boolean; isVisible: boolean; url: string }) => (
                 <Card key={repo.id} className="p-4 hover:shadow-md transition-shadow relative">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">

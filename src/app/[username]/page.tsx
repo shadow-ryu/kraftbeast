@@ -1,8 +1,9 @@
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
+import Image from 'next/image'
 import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Github, ExternalLink, Eye, Twitter, Mail, Briefcase, Clock, GitCommit } from 'lucide-react'
+import { Github, Eye, Twitter, Mail, Briefcase, Clock, GitCommit } from 'lucide-react'
 import ContactForm from '@/components/contact-form'
 import RepoCard from '@/components/repo-card'
 
@@ -13,7 +14,8 @@ export default async function PortfolioPage({
 }) {
   const { username } = await params
   
-  const user = await prisma.user.findUnique({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const user: any = await (prisma.user.findUnique as any)({
     where: { githubHandle: username },
     include: { 
       repos: { 
@@ -47,10 +49,12 @@ export default async function PortfolioPage({
           {/* Left Sidebar - Profile */}
           <div className="lg:sticky lg:top-8 h-fit">
             <Card className="p-6">
-              <img 
+              <Image 
                 src={user.avatarUrl || '/placeholder-avatar.png'} 
                 alt={user.name || username}
-                className="w-24 h-24 rounded-full mx-auto mb-4"
+                width={96}
+                height={96}
+                className="rounded-full mx-auto mb-4"
               />
               <h1 className="text-2xl font-bold text-center mb-1">
                 {user.name || username}
@@ -99,7 +103,7 @@ export default async function PortfolioPage({
                   </div>
                   <div>
                     <div className="text-2xl font-bold">
-                      {user.repos.reduce((sum: number, repo: any) => sum + repo.stars, 0)}
+                      {user.repos.reduce((sum: number, repo: { stars: number }) => sum + repo.stars, 0)}
                     </div>
                     <div className="text-xs text-neutral-600">Stars</div>
                   </div>
@@ -126,7 +130,7 @@ export default async function PortfolioPage({
                   <h2 className="text-2xl font-bold">Work History</h2>
                 </div>
                 <div className="space-y-6">
-                  {user.workHistory.map((work: any) => (
+                  {user.workHistory.map((work: { id: string; title: string; company: string; startDate: string; endDate: string | null; bullets: string[] }) => (
                     <Card key={work.id} className="p-6">
                       <div className="flex justify-between items-start mb-3">
                         <div>
@@ -166,12 +170,16 @@ export default async function PortfolioPage({
                 </Card>
               ) : (
                 <div className="grid md:grid-cols-2 gap-6">
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   {user.repos.map((repo: any) => (
                     <RepoCard 
                       key={repo.id} 
-                      repo={repo} 
+                      repo={{
+                        ...repo,
+                        languages: repo.languages as Record<string, number> | null
+                      }} 
                       githubHandle={username}
-                      defaultTab={(user as any).defaultRepoView || 'readme'}
+                      defaultTab={(user as { defaultRepoView?: string }).defaultRepoView || 'readme'}
                     />
                   ))}
                 </div>
@@ -187,7 +195,7 @@ export default async function PortfolioPage({
                 </div>
                 <Card className="p-6">
                   <div className="space-y-4">
-                    {user.timeline.map((entry: unknown) => (
+                    {user.timeline.map((entry: { id: string; repoName: string; message: string; timestamp: Date }) => (
                       <div key={entry.id} className="flex gap-4 pb-4 border-b last:border-b-0 last:pb-0">
                         <div className="flex-shrink-0">
                           <GitCommit className="h-5 w-5 text-neutral-500" />
@@ -228,7 +236,7 @@ export default async function PortfolioPage({
       <footer className="border-t bg-white py-6 mt-12">
         <div className="container mx-auto px-4 text-center text-sm text-neutral-600">
           <p>
-            Powered by <a href="/" className="text-blue-600 hover:underline">KraftBeast</a>
+            Powered by <Link href="/" className="text-blue-600 hover:underline">KraftBeast</Link>
             {' '}- Portfolio that updates itself
           </p>
         </div>

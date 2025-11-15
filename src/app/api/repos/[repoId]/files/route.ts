@@ -62,9 +62,21 @@ export async function GET(
   }
 }
 
-function buildTree(items: any[]) {
-  const root: any[] = []
-  const map = new Map()
+interface TreeItem {
+  path: string
+  type: string
+}
+
+interface TreeNode {
+  path: string
+  name: string
+  type: string
+  children?: TreeNode[]
+}
+
+function buildTree(items: TreeItem[]) {
+  const root: TreeNode[] = []
+  const map = new Map<string, TreeNode>()
 
   // Sort items so folders come first
   items.sort((a, b) => {

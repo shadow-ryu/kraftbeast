@@ -1,5 +1,6 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
+import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
@@ -43,10 +44,12 @@ export default async function SettingsPage() {
             <span className="font-bold text-xl">Back to Dashboard</span>
           </Link>
           <div className="flex items-center gap-4">
-            <img 
-              src={user?.imageUrl} 
+            <Image 
+              src={user?.imageUrl || '/placeholder-avatar.png'} 
               alt={user?.firstName || 'User'} 
-              className="h-8 w-8 rounded-full"
+              width={32}
+              height={32}
+              className="rounded-full"
             />
           </div>
         </div>
@@ -59,9 +62,9 @@ export default async function SettingsPage() {
           user={{
             githubHandle: dbUser?.githubHandle || null,
             githubConnected: dbUser?.githubConnected || false,
-            twitterHandle: (dbUser as any)?.twitterHandle || null,
-            forwardEmail: (dbUser as any)?.forwardEmail || null,
-            defaultRepoView: (dbUser as unknown)?.defaultRepoView || 'readme',
+            twitterHandle: (dbUser as { twitterHandle?: string | null })?.twitterHandle || null,
+            forwardEmail: (dbUser as { forwardEmail?: string | null })?.forwardEmail || null,
+            defaultRepoView: (dbUser as { defaultRepoView?: string })?.defaultRepoView || 'readme',
           }}
           repos={dbUser?.repos || []}
         />
