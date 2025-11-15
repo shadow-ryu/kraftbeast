@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Repo {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  stars       Int      @default(0)
+  commits     Int      @default(0)
+  lastPushed  DateTime
+  url         String
+  language    String?
+  isPrivate   Boolean  @default(false)
+  isVisible   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation("UserRepos", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+}
+
+model User {
+  id              String        @id @default(cuid())
+  clerkId         String        @unique
+  email           String        @unique
+  name            String?
+  avatarUrl       String?
+  bio             String?
+  githubHandle    String?       @unique
+  githubToken     String?
+  githubConnected Boolean       @default(false)
+  twitterHandle   String?
+  forwardEmail    String?
+  visits          Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  repos           Repo[]        @relation("UserRepos")
+  workHistory     WorkHistory[]
+  timeline        Timeline[]
+}
+
+model WorkHistory {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  company     String
+  startDate   String
+  endDate     String?
+  bullets     String[]
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Timeline {
+  id          String   @id @default(cuid())
+  userId      String
+  repoName    String
+  message     String
+  timestamp   DateTime
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, timestamp])
+}
