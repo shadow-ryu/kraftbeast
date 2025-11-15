@@ -37,6 +37,7 @@ model User {
   githubToken     String?
   githubConnected Boolean       @default(false)
   twitterHandle   String?
+  linkedinUrl     String?
   forwardEmail    String?
   visits          Int           @default(0)
   createdAt       DateTime      @default(now())

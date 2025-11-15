@@ -17,7 +17,6 @@ export default async function PortfolioPage({
     include: { 
       repos: { 
         where: { 
-          isPrivate: false,
           isVisible: true 
         },
         orderBy: { lastPushed: 'desc' } 

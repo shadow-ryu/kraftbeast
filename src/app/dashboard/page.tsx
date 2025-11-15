@@ -71,9 +71,14 @@ export default async function DashboardPage() {
               Welcome back, {user?.firstName || 'Developer'}!
             </p>
           </div>
-          <Link href="/dashboard/profile">
-            <Button variant="outline">Edit Profile</Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/dashboard/profile">
+              <Button variant="outline">Edit Profile</Button>
+            </Link>
+            <Link href="/dashboard/settings">
+              <Button variant="outline">Settings</Button>
+            </Link>
+          </div>
         </div>
 
         {/* Stats */}
