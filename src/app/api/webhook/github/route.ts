@@ -8,6 +8,11 @@ function verifySignature(payload: string, signature: string, secret: string): bo
   return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest))
 }
 
+/**
+ * GitHub App webhook handler
+ * Handles push events and installation events
+ * Works with both OAuth (legacy) and GitHub App installations
+ */
 export async function POST(request: NextRequest) {
   try {
     const payload = await request.text()
@@ -24,6 +29,11 @@ export async function POST(request: NextRequest) {
     }
 
     const data = JSON.parse(payload)
+
+    // Handle GitHub App installation events
+    if (event === 'installation' || event === 'installation_repositories') {
+      return handleInstallationEvent(event, data)
+    }
 
     // Handle push events
     if (event === 'push') {
@@ -152,4 +162,79 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
+}
+
+/**
+ * Handle GitHub App installation events
+ */
+async function handleInstallationEvent(event: string, data: { action?: string; installation?: { id?: number; account?: { login?: string } } }) {
+  const action = data.action
+  const installation = data.installation
+  const installationId = installation?.id?.toString()
+
+  if (!installationId) {
+    return NextResponse.json({ message: 'No installation ID' })
+  }
+
+  // Get the account that installed the app
+  const accountLogin = installation?.account?.login
+
+  if (event === 'installation') {
+    if (action === 'created') {
+      // App was installed - find user by GitHub handle and update
+      if (!accountLogin) {
+        return NextResponse.json({ message: 'No account login' })
+      }
+      
+      const user = await prisma.user.findUnique({
+        where: { githubHandle: accountLogin }
+      })
+
+      if (user) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            githubInstallationId: installationId,
+            githubAppConnected: true,
+          }
+        })
+      }
+
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Installation created' 
+      })
+    } else if (action === 'deleted') {
+      // App was uninstalled - mark user as disconnected
+      const user = await prisma.user.findFirst({
+        where: { githubInstallationId: installationId }
+      })
+
+      if (user) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            githubInstallationId: null,
+            githubAppConnected: false,
+          }
+        })
+      }
+
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Installation deleted' 
+      })
+    }
+  }
+
+  if (event === 'installation_repositories') {
+    // Repositories were added or removed from the installation
+    // You can trigger a sync here if needed
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Installation repositories updated' 
+    })
+  }
+
+  return NextResponse.json({ message: 'Installation event not handled' })
 }

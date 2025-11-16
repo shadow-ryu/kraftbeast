@@ -9,6 +9,8 @@ import Link from 'next/link'
 import { Github, ExternalLink, Star } from 'lucide-react'
 import { VisibilityToggle } from '@/components/visibility-toggle'
 import SyncButton from '@/components/sync-button'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { GitHubAppMigrationBanner } from '@/components/github-app-migration-banner'
 
 export default async function DashboardPage() {
   const { userId } = await auth()
@@ -39,9 +41,9 @@ export default async function DashboardPage() {
     : null
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-white">
+      <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2">
             <span className="font-bold text-xl">KraftBeast</span>
@@ -55,6 +57,7 @@ export default async function DashboardPage() {
                 </Button>
               </Link>
             )}
+            <ThemeToggle />
             <Image 
               src={user?.imageUrl || '/placeholder-avatar.png'} 
               alt={user?.firstName || 'User'} 
@@ -103,27 +106,42 @@ export default async function DashboardPage() {
           </Card>
         </div>
 
+        {/* Migration Banner - Show if user has OAuth but not GitHub App */}
+        <GitHubAppMigrationBanner 
+          hasOAuthToken={!!dbUser?.githubToken && !dbUser?.githubAppConnected}
+          hasGitHubApp={!!dbUser?.githubAppConnected}
+        />
+
         {/* GitHub Connection */}
-        {!dbUser?.githubConnected ? (
+        {!dbUser?.githubConnected && !dbUser?.githubAppConnected ? (
           <Card className="p-8 mb-6 text-center border-2 border-dashed">
             <Github className="h-16 w-16 mx-auto mb-4 text-neutral-400" />
             <h2 className="text-2xl font-bold mb-2">Connect Your GitHub</h2>
             <p className="text-neutral-600 mb-6">
-              Connect your GitHub account to automatically sync your repositories and build your portfolio.
+              Install our GitHub App to automatically sync your repositories and build your portfolio.
+              <br />
+              <span className="text-sm text-green-600 font-medium">✓ Read-only access • No write permissions</span>
             </p>
             <Button 
               size="lg"
-              onClick={() => window.location.href = '/api/auth/github/connect'}
+              onClick={() => window.location.href = '/api/auth/github/app/install'}
             >
               <Github className="h-5 w-5 mr-2" />
-              Connect GitHub Account
+              Install GitHub App
             </Button>
           </Card>
         ) : (
           <div className="mb-6 flex items-center gap-4">
             <div className="flex items-center gap-2 text-green-600">
               <Github className="h-5 w-5" />
-              <span className="font-medium">GitHub Connected: @{dbUser.githubHandle}</span>
+              <span className="font-medium">
+                GitHub Connected: @{dbUser.githubHandle}
+                {dbUser?.githubAppConnected && (
+                  <Badge variant="default" className="ml-2 text-xs">
+                    App ✓
+                  </Badge>
+                )}
+              </span>
             </div>
             <SyncButton />
           </div>

@@ -23,9 +23,12 @@ interface SettingsContentProps {
   user: {
     githubHandle: string | null
     githubConnected: boolean
+    githubAppConnected?: boolean
     twitterHandle: string | null
     forwardEmail: string | null
     defaultRepoView: string
+    timelineRangeFrom: Date | null
+    timelineRangeTo: Date | null
   }
   repos: Repo[]
 }
@@ -35,18 +38,50 @@ export default function SettingsContent({ user, repos }: SettingsContentProps) {
   const [twitterHandle, setTwitterHandle] = useState(user.twitterHandle || '')
   const [forwardEmail, setForwardEmail] = useState(user.forwardEmail || '')
   const [defaultRepoView, setDefaultRepoView] = useState(user.defaultRepoView || 'readme')
+  const [timelinePreset, setTimelinePreset] = useState<string>('90days')
+  const [customFrom, setCustomFrom] = useState<string>('')
+  const [customTo, setCustomTo] = useState<string>('')
   const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+
+  // Initialize timeline range from user settings
+  useState(() => {
+    if (user.timelineRangeFrom && user.timelineRangeTo) {
+      setTimelinePreset('custom')
+      setCustomFrom(new Date(user.timelineRangeFrom).toISOString().split('T')[0])
+      setCustomTo(new Date(user.timelineRangeTo).toISOString().split('T')[0])
+    }
+  })
 
   const handleSaveSettings = async () => {
     setIsSaving(true)
     setSaveMessage(null)
     
     try {
+      // Calculate timeline range based on preset
+      let timelineRangeFrom = null
+      let timelineRangeTo = null
+
+      if (timelinePreset === 'custom' && customFrom && customTo) {
+        timelineRangeFrom = new Date(customFrom).toISOString()
+        timelineRangeTo = new Date(customTo).toISOString()
+      } else if (timelinePreset !== 'custom') {
+        const now = new Date()
+        const days = timelinePreset === '7days' ? 7 : timelinePreset === '30days' ? 30 : 90
+        timelineRangeFrom = new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString()
+        timelineRangeTo = now.toISOString()
+      }
+
       const response = await fetch('/api/user/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ twitterHandle, forwardEmail, defaultRepoView }),
+        body: JSON.stringify({ 
+          twitterHandle, 
+          forwardEmail, 
+          defaultRepoView,
+          timelineRangeFrom,
+          timelineRangeTo
+        }),
       })
 
       if (response.ok) {
@@ -193,19 +228,33 @@ export default function SettingsContent({ user, repos }: SettingsContentProps) {
                       : 'Not connected'
                     }
                   </div>
+                  {user.githubAppConnected && (
+                    <div className="text-xs text-green-600 font-medium mt-1">
+                      ✓ GitHub App (Read-only)
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                {user.githubConnected ? (
+                {user.githubConnected || user.githubAppConnected ? (
                   <>
                     <Badge variant="default" className="flex items-center gap-1">
                       <CheckCircle2 className="h-3 w-3" />
                       Connected
                     </Badge>
+                    {!user.githubAppConnected && (
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        onClick={() => window.location.href = '/api/auth/github/app/install'}
+                      >
+                        Upgrade to App
+                      </Button>
+                    )}
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => window.location.href = '/api/auth/github/connect'}
+                      onClick={() => window.location.href = '/api/auth/github/app/install'}
                     >
                       Reconnect
                     </Button>
@@ -218,9 +267,9 @@ export default function SettingsContent({ user, repos }: SettingsContentProps) {
                     </Badge>
                     <Button 
                       size="sm"
-                      onClick={() => window.location.href = '/api/auth/github/connect'}
+                      onClick={() => window.location.href = '/api/auth/github/app/install'}
                     >
-                      Connect
+                      Install App
                     </Button>
                   </>
                 )}
@@ -348,6 +397,107 @@ export default function SettingsContent({ user, repos }: SettingsContentProps) {
               className="w-full"
             >
               {isSaving ? 'Saving...' : 'Save Settings'}
+            </Button>
+
+            {saveMessage && (
+              <p className={`text-sm ${saveMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                {saveMessage.text}
+              </p>
+            )}
+          </div>
+        </Card>
+      </section>
+
+      {/* Timeline Range Section */}
+      <section>
+        <Card className="p-6">
+          <h2 className="text-xl font-bold mb-4">Timeline Range</h2>
+          <p className="text-sm text-neutral-600 mb-6">
+            Control which commits appear on your portfolio timeline
+          </p>
+
+          <div className="space-y-4">
+            <div>
+              <Label>Time Period</Label>
+              <div className="space-y-2 mt-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="timelinePreset"
+                    value="7days"
+                    checked={timelinePreset === '7days'}
+                    onChange={(e) => setTimelinePreset(e.target.value)}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">Last 7 Days</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="timelinePreset"
+                    value="30days"
+                    checked={timelinePreset === '30days'}
+                    onChange={(e) => setTimelinePreset(e.target.value)}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">Last 30 Days</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="timelinePreset"
+                    value="90days"
+                    checked={timelinePreset === '90days'}
+                    onChange={(e) => setTimelinePreset(e.target.value)}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">Last 90 Days (Default)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="timelinePreset"
+                    value="custom"
+                    checked={timelinePreset === 'custom'}
+                    onChange={(e) => setTimelinePreset(e.target.value)}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">Custom Range</span>
+                </label>
+              </div>
+            </div>
+
+            {timelinePreset === 'custom' && (
+              <div className="space-y-3 pl-6 border-l-2 border-neutral-200">
+                <div>
+                  <Label htmlFor="customFrom">From Date</Label>
+                  <Input
+                    id="customFrom"
+                    type="date"
+                    value={customFrom}
+                    onChange={(e) => setCustomFrom(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="customTo">To Date</Label>
+                  <Input
+                    id="customTo"
+                    type="date"
+                    value={customTo}
+                    onChange={(e) => setCustomTo(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+            )}
+
+            <Button 
+              onClick={handleSaveSettings}
+              disabled={isSaving}
+              className="w-full"
+            >
+              {isSaving ? 'Saving...' : 'Save Timeline Range'}
             </Button>
 
             {saveMessage && (

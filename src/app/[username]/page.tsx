@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card'
 import { Github, Eye, Twitter, Mail, Briefcase, Clock, GitCommit } from 'lucide-react'
 import ContactForm from '@/components/contact-form'
 import RepoCard from '@/components/repo-card'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 export default async function PortfolioPage({ 
   params 
@@ -26,18 +27,31 @@ export default async function PortfolioPage({
       },
       workHistory: {
         orderBy: { order: 'asc' }
-      },
-      timeline: {
-        where: {
-          hidden: false
-        },
-        orderBy: { timestamp: 'desc' },
-        take: 50
       }
     }
   })
 
   if (!user) notFound()
+
+  // Calculate timeline range
+  const now = new Date()
+  const defaultFrom = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+  const timelineFrom = user.timelineRangeFrom || defaultFrom
+  const timelineTo = user.timelineRangeTo || now
+
+  // Fetch timeline with date range
+  const timeline = await prisma.timeline.findMany({
+    where: {
+      userId: user.id,
+      hidden: false,
+      timestamp: {
+        gte: timelineFrom,
+        lte: timelineTo
+      }
+    },
+    orderBy: { timestamp: 'desc' },
+    take: 100
+  })
 
   // Increment visit count
   await prisma.user.update({
@@ -45,9 +59,23 @@ export default async function PortfolioPage({
     data: { visits: { increment: 1 } }
   })
 
+  // Format date range for display
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
+
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
+        {/* Theme Toggle - Top Right */}
+        <div className="flex justify-end mb-4">
+          <ThemeToggle />
+        </div>
+        
         <div className="grid lg:grid-cols-[300px_1fr] gap-8">
           {/* Left Sidebar - Profile */}
           <div className="lg:sticky lg:top-8 h-fit">
@@ -114,35 +142,6 @@ export default async function PortfolioPage({
               </div>
             </Card>
 
-            {/* Ship Timeline Section */}
-            <Card className="bg-[#1a1a1a] border-[#1a1a1a] p-6 mt-4">
-              <h3 className="text-xl font-bold text-white text-center mb-4">Ship Timeline</h3>
-              {user.timeline.length > 0 ? (
-                <ul className="flex flex-col gap-2 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-[#00ff88] scrollbar-track-[#0a0a0a]">
-                  {user.timeline.map((entry: { id: string; repoName: string; message: string; timestamp: Date }) => (
-                    <li 
-                      key={entry.id}
-                      className="border-l-2 border-[#00ff88] pl-3 py-1.5 font-mono text-xs text-[#cccccc]"
-                    >
-                      <div className="text-white font-semibold">{entry.repoName}</div>
-                      <div className="text-[#00ff88] text-[10px]">
-                        {new Date(entry.timestamp).toLocaleTimeString('en-US', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: true
-                        })}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="text-center py-8">
-                  <div className="text-6xl mb-3">🚀</div>
-                  <p className="text-[#a0a0a0] text-sm font-mono">No ships yet...</p>
-                  <p className="text-[#666] text-xs mt-1">Push some code to see it here!</p>
-                </div>
-              )}
-            </Card>
           </div>
 
           {/* Right Content */}
@@ -219,16 +218,19 @@ export default async function PortfolioPage({
               )}
             </section>
 
-            {/* War Timeline Section */}
-            {user.timeline.length > 0 && (
+            {/* Activity Timeline Section */}
+            {timeline.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 mb-6">
                   <Clock className="h-6 w-6" />
                   <h2 className="text-2xl font-bold">Activity Timeline</h2>
                 </div>
                 <Card className="p-6">
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
+                    Showing commits from {formatDate(timelineFrom)} to {formatDate(timelineTo)}
+                  </p>
                   <div className="space-y-4">
-                    {user.timeline.map((entry: { id: string; repoName: string; message: string; timestamp: Date }) => (
+                    {timeline.map((entry: { id: string; repoName: string; message: string; timestamp: Date }) => (
                       <div key={entry.id} className="flex gap-4 pb-4 border-b last:border-b-0 last:pb-0">
                         <div className="flex-shrink-0">
                           <GitCommit className="h-5 w-5 text-neutral-500" />
@@ -266,10 +268,10 @@ export default async function PortfolioPage({
       </div>
 
       {/* Footer */}
-      <footer className="border-t bg-white py-6 mt-12">
-        <div className="container mx-auto px-4 text-center text-sm text-neutral-600">
+      <footer className="border-t bg-card py-6 mt-12">
+        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
           <p>
-            Powered by <Link href="/" className="text-blue-600 hover:underline">KraftBeast</Link>
+            Powered by <Link href="/" className="text-blue-600 dark:text-blue-400 hover:underline">KraftBeast</Link>
             {' '}- Portfolio that updates itself
           </p>
         </div>

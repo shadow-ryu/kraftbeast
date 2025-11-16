@@ -4,6 +4,10 @@ import { useState, useEffect } from 'react'
 import { X, FileText, FolderTree, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import rehypeRaw from 'rehype-raw'
+import rehypeSanitize from 'rehype-sanitize'
 
 interface RepoModalProps {
   isOpen: boolean
@@ -99,22 +103,22 @@ export default function RepoModal({ isOpen, onClose, repo, defaultTab = 'readme'
     : []
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/70" onClick={onClose}>
       <div 
-        className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
+        className="bg-white dark:bg-neutral-900 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="border-b p-6 flex justify-between items-start">
+        <div className="border-b dark:border-neutral-800 p-6 flex justify-between items-start">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <h2 className="text-2xl font-bold">{repo.name}</h2>
+              <h2 className="text-2xl font-bold dark:text-white">{repo.name}</h2>
               <Badge variant="outline" className="flex items-center gap-1">
                 <span>👾</span>
                 Private
               </Badge>
             </div>
-            <p className="text-neutral-600">{repo.description || 'No description'}</p>
+            <p className="text-neutral-600 dark:text-neutral-400">{repo.description || 'No description'}</p>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-5 w-5" />
@@ -122,13 +126,13 @@ export default function RepoModal({ isOpen, onClose, repo, defaultTab = 'readme'
         </div>
 
         {/* Tabs */}
-        <div className="border-b">
+        <div className="border-b dark:border-neutral-800">
           <div className="flex gap-1 px-6">
             <button
               className={`px-4 py-3 font-medium border-b-2 transition-colors ${
                 activeTab === 'readme'
-                  ? 'border-neutral-900 text-neutral-900'
-                  : 'border-transparent text-neutral-600 hover:text-neutral-900'
+                  ? 'border-neutral-900 dark:border-white text-neutral-900 dark:text-white'
+                  : 'border-transparent text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
               }`}
               onClick={() => setActiveTab('readme')}
             >
@@ -138,8 +142,8 @@ export default function RepoModal({ isOpen, onClose, repo, defaultTab = 'readme'
             <button
               className={`px-4 py-3 font-medium border-b-2 transition-colors ${
                 activeTab === 'files'
-                  ? 'border-neutral-900 text-neutral-900'
-                  : 'border-transparent text-neutral-600 hover:text-neutral-900'
+                  ? 'border-neutral-900 dark:border-white text-neutral-900 dark:text-white'
+                  : 'border-transparent text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
               }`}
               onClick={() => setActiveTab('files')}
             >
@@ -149,8 +153,8 @@ export default function RepoModal({ isOpen, onClose, repo, defaultTab = 'readme'
             <button
               className={`px-4 py-3 font-medium border-b-2 transition-colors ${
                 activeTab === 'description'
-                  ? 'border-neutral-900 text-neutral-900'
-                  : 'border-transparent text-neutral-600 hover:text-neutral-900'
+                  ? 'border-neutral-900 dark:border-white text-neutral-900 dark:text-white'
+                  : 'border-transparent text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
               }`}
               onClick={() => setActiveTab('description')}
             >
@@ -164,22 +168,25 @@ export default function RepoModal({ isOpen, onClose, repo, defaultTab = 'readme'
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
           {activeTab === 'readme' && (
             <div>
-              {loading && <p className="text-neutral-600">Loading README...</p>}
-              {error && <p className="text-red-600">{error}</p>}
+              {loading && <p className="text-neutral-600 dark:text-neutral-400">Loading README...</p>}
+              {error && <p className="text-red-600 dark:text-red-400">{error}</p>}
               {readmeContent && (
-                <div className="prose max-w-none">
-                  <pre className="whitespace-pre-wrap bg-neutral-50 p-4 rounded">
+                <article className="prose dark:prose-invert max-w-none">
+                  <ReactMarkdown 
+                    remarkPlugins={[remarkGfm]} 
+                    rehypePlugins={[rehypeRaw, rehypeSanitize]}
+                  >
                     {readmeContent}
-                  </pre>
-                </div>
+                  </ReactMarkdown>
+                </article>
               )}
             </div>
           )}
 
           {activeTab === 'files' && (
             <div>
-              {loading && <p className="text-neutral-600">Loading file structure...</p>}
-              {error && <p className="text-red-600">{error}</p>}
+              {loading && <p className="text-neutral-600 dark:text-neutral-400">Loading file structure...</p>}
+              {error && <p className="text-red-600 dark:text-red-400">{error}</p>}
               {fileStructure && <FileTree tree={fileStructure} />}
             </div>
           )}
@@ -187,11 +194,11 @@ export default function RepoModal({ isOpen, onClose, repo, defaultTab = 'readme'
           {activeTab === 'description' && (
             <div className="space-y-4">
               <div>
-                <h3 className="font-semibold mb-2">Description</h3>
-                <p className="text-neutral-600">{repo.description || 'No description provided'}</p>
+                <h3 className="font-semibold mb-2 dark:text-white">Description</h3>
+                <p className="text-neutral-600 dark:text-neutral-400">{repo.description || 'No description provided'}</p>
               </div>
               <div>
-                <h3 className="font-semibold mb-2">Languages</h3>
+                <h3 className="font-semibold mb-2 dark:text-white">Languages</h3>
                 <div className="flex flex-wrap gap-2">
                   {languagesList.length > 0 ? (
                     languagesList.map((lang) => (
@@ -203,21 +210,21 @@ export default function RepoModal({ isOpen, onClose, repo, defaultTab = 'readme'
                 </div>
               </div>
               <div>
-                <h3 className="font-semibold mb-2">Stats</h3>
+                <h3 className="font-semibold mb-2 dark:text-white">Stats</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-neutral-600">Stars</p>
-                    <p className="text-2xl font-bold">{repo.stars}</p>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400">Stars</p>
+                    <p className="text-2xl font-bold dark:text-white">{repo.stars}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-neutral-600">Commits</p>
-                    <p className="text-2xl font-bold">{repo.commits}</p>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400">Commits</p>
+                    <p className="text-2xl font-bold dark:text-white">{repo.commits}</p>
                   </div>
                 </div>
               </div>
               <div>
-                <h3 className="font-semibold mb-2">Last Updated</h3>
-                <p className="text-neutral-600">
+                <h3 className="font-semibold mb-2 dark:text-white">Last Updated</h3>
+                <p className="text-neutral-600 dark:text-neutral-400">
                   {new Date(repo.lastPushed).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
@@ -254,7 +261,7 @@ function FileTree({ tree }: { tree: FileNode[] }) {
       return (
         <div key={item.path}>
           <div
-            className={`flex items-center gap-2 py-1 px-2 hover:bg-neutral-50 rounded cursor-pointer`}
+            className={`flex items-center gap-2 py-1 px-2 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded cursor-pointer`}
             style={{ paddingLeft: `${level * 20 + 8}px` }}
             onClick={() => isFolder && toggleExpand(item.path)}
           >
@@ -263,7 +270,7 @@ function FileTree({ tree }: { tree: FileNode[] }) {
             ) : (
               <span>📄</span>
             )}
-            <span className="text-sm">{item.path.split('/').pop()}</span>
+            <span className="text-sm dark:text-neutral-300">{item.path.split('/').pop()}</span>
           </div>
           {isFolder && isExpanded && item.children && (
             <div>{renderTree(item.children, level + 1)}</div>
@@ -273,5 +280,5 @@ function FileTree({ tree }: { tree: FileNode[] }) {
     })
   }
 
-  return <div className="font-mono text-sm">{renderTree(tree)}</div>
+  return <div className="font-mono text-sm dark:text-neutral-300">{renderTree(tree)}</div>
 }

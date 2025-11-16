@@ -29,25 +29,29 @@ model Repo {
 }
 
 model User {
-  id              String        @id @default(cuid())
-  clerkId         String        @unique
-  email           String        @unique
-  name            String?
-  avatarUrl       String?
-  bio             String?
-  githubHandle    String?       @unique
-  githubToken     String?
-  githubConnected Boolean       @default(false)
-  twitterHandle   String?
-  linkedinUrl     String?
-  forwardEmail    String?
-  defaultRepoView String        @default("readme")
-  visits          Int           @default(0)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  repos           Repo[]        @relation("UserRepos")
-  workHistory     WorkHistory[]
-  timeline        Timeline[]
+  id                    String        @id @default(cuid())
+  clerkId               String        @unique
+  email                 String        @unique
+  name                  String?
+  avatarUrl             String?
+  bio                   String?
+  githubHandle          String?       @unique
+  githubToken           String?       // Legacy OAuth token (deprecated)
+  githubConnected       Boolean       @default(false) // Legacy OAuth flag
+  githubInstallationId  String?       // GitHub App installation ID
+  githubAppConnected    Boolean       @default(false) // GitHub App connection flag
+  twitterHandle         String?
+  linkedinUrl           String?
+  forwardEmail          String?
+  defaultRepoView       String        @default("readme")
+  timelineRangeFrom     DateTime?     // Timeline range start (null = default 90 days)
+  timelineRangeTo       DateTime?     // Timeline range end (null = now)
+  visits                Int           @default(0)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  repos                 Repo[]        @relation("UserRepos")
+  workHistory           WorkHistory[]
+  timeline              Timeline[]
 }
 
 model WorkHistory {

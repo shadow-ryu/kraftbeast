@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import SettingsContent from '@/components/settings-content'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 export default async function SettingsPage() {
   const { userId } = await auth()
@@ -35,15 +36,16 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-white">
+      <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/dashboard" className="flex items-center gap-2">
             <ArrowLeft className="h-5 w-5" />
             <span className="font-bold text-xl">Back to Dashboard</span>
           </Link>
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             <Image 
               src={user?.imageUrl || '/placeholder-avatar.png'} 
               alt={user?.firstName || 'User'} 
@@ -62,9 +64,12 @@ export default async function SettingsPage() {
           user={{
             githubHandle: dbUser?.githubHandle || null,
             githubConnected: dbUser?.githubConnected || false,
+            githubAppConnected: (dbUser as { githubAppConnected?: boolean })?.githubAppConnected || false,
             twitterHandle: (dbUser as { twitterHandle?: string | null })?.twitterHandle || null,
             forwardEmail: (dbUser as { forwardEmail?: string | null })?.forwardEmail || null,
             defaultRepoView: (dbUser as { defaultRepoView?: string })?.defaultRepoView || 'readme',
+            timelineRangeFrom: (dbUser as { timelineRangeFrom?: Date | null })?.timelineRangeFrom || null,
+            timelineRangeTo: (dbUser as { timelineRangeTo?: Date | null })?.timelineRangeTo || null,
           }}
           repos={dbUser?.repos || []}
         />

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useEffect, useState } from 'react'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 export default function HomePage() {
   const [cursorVisible, setCursorVisible] = useState(true)
@@ -16,12 +17,13 @@ export default function HomePage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black dark:bg-[#0d0d0d] text-white">
       {/* Header */}
-      <header className="border-b border-[#1a1a1a]">
+      <header className="border-b border-neutral-800 dark:border-neutral-900">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center max-w-[1200px]">
           <span className="font-bold text-xl">KraftBeast</span>
-          <div className="flex gap-4">
+          <div className="flex gap-4 items-center">
+            <ThemeToggle />
             <Link href="/sign-in">
               <Button variant="ghost" className="text-white hover:text-[#00ff88]">
                 Sign In
@@ -62,23 +64,23 @@ export default function HomePage() {
         <div className="container mx-auto max-w-[1200px]">
           <h2 className="text-4xl font-bold text-center mb-12">What You Get</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="bg-[#1a1a1a] border-[#1a1a1a] p-8 rounded-md shadow-lg">
+            <Card className="bg-neutral-900 dark:bg-[#1a1a1a] border-neutral-800 dark:border-neutral-900 p-8 rounded-md shadow-lg">
               <h3 className="text-xl font-semibold mb-3 text-white">Auto-Timeline</h3>
-              <p className="text-[#a0a0a0] leading-relaxed">
+              <p className="text-neutral-400 leading-relaxed">
                 Every push adds a dated scar. No rebuilds.
               </p>
             </Card>
             
-            <Card className="bg-[#1a1a1a] border-[#1a1a1a] p-8 rounded-md shadow-lg">
+            <Card className="bg-neutral-900 dark:bg-[#1a1a1a] border-neutral-800 dark:border-neutral-900 p-8 rounded-md shadow-lg">
               <h3 className="text-xl font-semibold mb-3 text-white">Work History</h3>
-              <p className="text-[#a0a0a0] leading-relaxed">
+              <p className="text-neutral-400 leading-relaxed">
                 Add roles + bullets. Chrono above ships.
               </p>
             </Card>
             
-            <Card className="bg-[#1a1a1a] border-[#1a1a1a] p-8 rounded-md shadow-lg">
+            <Card className="bg-neutral-900 dark:bg-[#1a1a1a] border-neutral-800 dark:border-neutral-900 p-8 rounded-md shadow-lg">
               <h3 className="text-xl font-semibold mb-3 text-white">Contact Form</h3>
-              <p className="text-[#a0a0a0] leading-relaxed">
+              <p className="text-neutral-400 leading-relaxed">
                 One-click reach-outs. Forward to your email.
               </p>
             </Card>
@@ -87,10 +89,10 @@ export default function HomePage() {
       </section>
 
       {/* Demo Section */}
-      <section className="py-20 px-4 bg-[#0a0a0a]">
+      <section className="py-20 px-4 bg-neutral-950 dark:bg-black">
         <div className="container mx-auto max-w-[1200px]">
           <h2 className="text-4xl font-bold text-center mb-12">See It Breathe</h2>
-          <div className="max-w-2xl mx-auto bg-[#1a1a1a] rounded-md p-8 font-mono text-sm overflow-auto max-h-[50vh]">
+          <div className="max-w-2xl mx-auto bg-neutral-900 dark:bg-[#1a1a1a] rounded-md p-8 font-mono text-sm overflow-auto max-h-[50vh]">
             <div className="space-y-4">
               <div className="flex items-start gap-4">
                 <div className="w-1 h-full bg-[#00ff88]"></div>
@@ -130,8 +132,8 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-[#1a1a1a] py-8">
-        <div className="container mx-auto px-4 text-center text-[#a0a0a0] max-w-[1200px]">
+      <footer className="border-t border-neutral-800 dark:border-neutral-900 py-8">
+        <div className="container mx-auto px-4 text-center text-neutral-400 max-w-[1200px]">
           <div className="flex justify-center gap-6 mb-4">
             <a href="#" className="text-[#00ff88] hover:underline">Docs</a>
             <a href="https://twitter.com/kraftbeast" target="_blank" rel="noopener noreferrer" className="text-[#00ff88] hover:underline">
