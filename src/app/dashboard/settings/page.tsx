@@ -71,7 +71,14 @@ export default async function SettingsPage() {
             timelineRangeFrom: (dbUser as { timelineRangeFrom?: Date | null })?.timelineRangeFrom?.toISOString() || null,
             timelineRangeTo: (dbUser as { timelineRangeTo?: Date | null })?.timelineRangeTo?.toISOString() || null,
           }}
-          repos={dbUser?.repos || []}
+          repos={(dbUser?.repos || []).map(repo => ({
+            id: repo.id,
+            name: repo.name,
+            isPrivate: repo.isPrivate,
+            isVisible: repo.isVisible,
+            description: repo.description,
+            stars: repo.stars
+          }))}
         />
       </div>
     </div>
