@@ -68,8 +68,8 @@ export default async function SettingsPage() {
             twitterHandle: (dbUser as { twitterHandle?: string | null })?.twitterHandle || null,
             forwardEmail: (dbUser as { forwardEmail?: string | null })?.forwardEmail || null,
             defaultRepoView: (dbUser as { defaultRepoView?: string })?.defaultRepoView || 'readme',
-            timelineRangeFrom: (dbUser as { timelineRangeFrom?: Date | null })?.timelineRangeFrom || null,
-            timelineRangeTo: (dbUser as { timelineRangeTo?: Date | null })?.timelineRangeTo || null,
+            timelineRangeFrom: (dbUser as { timelineRangeFrom?: Date | null })?.timelineRangeFrom?.toISOString() || null,
+            timelineRangeTo: (dbUser as { timelineRangeTo?: Date | null })?.timelineRangeTo?.toISOString() || null,
           }}
           repos={dbUser?.repos || []}
         />

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import * as React from 'react'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -27,8 +28,8 @@ interface SettingsContentProps {
     twitterHandle: string | null
     forwardEmail: string | null
     defaultRepoView: string
-    timelineRangeFrom: Date | null
-    timelineRangeTo: Date | null
+    timelineRangeFrom: string | null
+    timelineRangeTo: string | null
   }
   repos: Repo[]
 }
@@ -45,13 +46,13 @@ export default function SettingsContent({ user, repos }: SettingsContentProps) {
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
   // Initialize timeline range from user settings
-  useState(() => {
+  React.useEffect(() => {
     if (user.timelineRangeFrom && user.timelineRangeTo) {
       setTimelinePreset('custom')
       setCustomFrom(new Date(user.timelineRangeFrom).toISOString().split('T')[0])
       setCustomTo(new Date(user.timelineRangeTo).toISOString().split('T')[0])
     }
-  })
+  }, [user.timelineRangeFrom, user.timelineRangeTo])
 
   const handleSaveSettings = async () => {
     setIsSaving(true)
