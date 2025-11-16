@@ -11,6 +11,7 @@ import { VisibilityToggle } from '@/components/visibility-toggle'
 import SyncButton from '@/components/sync-button'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { GitHubAppMigrationBanner } from '@/components/github-app-migration-banner'
+import { GitHubConnectButton } from '@/components/github-connect-button'
 
 export default async function DashboardPage() {
   const { userId } = await auth()
@@ -108,12 +109,12 @@ export default async function DashboardPage() {
 
         {/* Migration Banner - Show if user has OAuth but not GitHub App */}
         <GitHubAppMigrationBanner 
-          hasOAuthToken={!!dbUser?.githubToken && !dbUser?.githubAppConnected}
-          hasGitHubApp={!!dbUser?.githubAppConnected}
+          hasOAuthToken={!!dbUser?.githubToken && !(dbUser as { githubAppConnected?: boolean })?.githubAppConnected}
+          hasGitHubApp={!!(dbUser as { githubAppConnected?: boolean })?.githubAppConnected}
         />
 
         {/* GitHub Connection */}
-        {!dbUser?.githubConnected && !dbUser?.githubAppConnected ? (
+        {!dbUser?.githubConnected && !(dbUser as { githubAppConnected?: boolean })?.githubAppConnected ? (
           <Card className="p-8 mb-6 text-center border-2 border-dashed">
             <Github className="h-16 w-16 mx-auto mb-4 text-neutral-400" />
             <h2 className="text-2xl font-bold mb-2">Connect Your GitHub</h2>
@@ -122,21 +123,15 @@ export default async function DashboardPage() {
               <br />
               <span className="text-sm text-green-600 font-medium">✓ Read-only access • No write permissions</span>
             </p>
-            <Button 
-              size="lg"
-              onClick={() => window.location.href = '/api/auth/github/app/install'}
-            >
-              <Github className="h-5 w-5 mr-2" />
-              Install GitHub App
-            </Button>
+            <GitHubConnectButton />
           </Card>
         ) : (
           <div className="mb-6 flex items-center gap-4">
             <div className="flex items-center gap-2 text-green-600">
               <Github className="h-5 w-5" />
               <span className="font-medium">
-                GitHub Connected: @{dbUser.githubHandle}
-                {dbUser?.githubAppConnected && (
+                GitHub Connected: @{dbUser?.githubHandle}
+                {(dbUser as { githubAppConnected?: boolean })?.githubAppConnected && (
                   <Badge variant="default" className="ml-2 text-xs">
                     App ✓
                   </Badge>
