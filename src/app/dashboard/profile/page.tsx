@@ -84,6 +84,7 @@ export default async function ProfilePage() {
             name={dbUser?.name || ''}
             bio={dbUser?.bio || ''}
             twitterHandle={dbUser?.twitterHandle || ''}
+            linkedinUrl={dbUser?.linkedinUrl || ''}
             forwardEmail={dbUser?.forwardEmail || ''}
           />
           

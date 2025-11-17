@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card'
 
 export default function PortfolioLoading() {
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-[300px_1fr] gap-8">
           <div className="lg:sticky lg:top-8 h-fit">

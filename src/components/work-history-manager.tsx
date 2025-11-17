@@ -73,7 +73,7 @@ export default function WorkHistoryManager({ workHistory }: { workHistory: WorkH
       </div>
 
       {showForm && (
-        <Card className="p-4 mb-4 bg-neutral-50">
+        <Card className="p-4 mb-4 bg-neutral-50 dark:bg-neutral-800">
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -149,12 +149,12 @@ export default function WorkHistoryManager({ workHistory }: { workHistory: WorkH
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="font-semibold">{item.title}</h3>
-                <p className="text-sm text-neutral-600">{item.company}</p>
-                <p className="text-xs text-neutral-500 mb-2">
+                <p className="text-sm text-neutral-600 dark:text-neutral-400">{item.company}</p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-500 mb-2">
                   {item.startDate} - {item.endDate || 'Present'}
                 </p>
                 {item.bullets.length > 0 && (
-                  <ul className="list-disc list-inside text-sm text-neutral-600">
+                  <ul className="list-disc list-inside text-sm text-neutral-600 dark:text-neutral-400">
                     {item.bullets.map((bullet, idx) => (
                       <li key={idx}>{bullet}</li>
                     ))}

@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Card } from '@/components/ui/card'
-import { Github, Eye, Twitter, Mail, Briefcase, Clock, GitCommit } from 'lucide-react'
+import { Github, Eye, Twitter, Mail, Briefcase, Clock, GitCommit, Linkedin } from 'lucide-react'
 import ContactForm from '@/components/contact-form'
 import RepoCard from '@/components/repo-card'
 import { ThemeToggle } from '@/components/theme-toggle'
@@ -96,33 +96,40 @@ export default async function PortfolioPage({
               
               {/* Social Links */}
               <div className="space-y-3 mb-6">
-                <div className="flex items-center gap-2 text-sm">
-                  <Github className="h-4 w-4 text-neutral-600" />
+                <a 
+                  href={`https://github.com/${username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800 p-2 rounded-lg transition-colors"
+                >
+                  <Github className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
+                  <span className="text-neutral-900 dark:text-neutral-100">@{username}</span>
+                </a>
+                {user.twitterHandle && (
                   <a 
-                    href={`https://github.com/${username}`}
+                    href={`https://twitter.com/${user.twitterHandle}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
+                    className="flex items-center gap-3 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800 p-2 rounded-lg transition-colors"
                   >
-                    github.com/{username}
+                    <Twitter className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
+                    <span className="text-neutral-900 dark:text-neutral-100">@{user.twitterHandle}</span>
                   </a>
-                </div>
-                {user.twitterHandle && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Twitter className="h-4 w-4 text-neutral-600" />
-                    <a 
-                      href={`https://twitter.com/${user.twitterHandle}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      @{user.twitterHandle}
-                    </a>
-                  </div>
                 )}
-                <div className="flex items-center gap-2 text-sm">
-                  <Eye className="h-4 w-4 text-neutral-600" />
-                  <span>{user.visits} visits</span>
+                {user.linkedinUrl && (
+                  <a 
+                    href={user.linkedinUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800 p-2 rounded-lg transition-colors"
+                  >
+                    <Linkedin className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
+                    <span className="text-neutral-900 dark:text-neutral-100">LinkedIn</span>
+                  </a>
+                )}
+                <div className="flex items-center gap-3 text-sm p-2">
+                  <Eye className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
+                  <span className="text-neutral-600 dark:text-neutral-400">{user.visits} visits</span>
                 </div>
               </div>
 

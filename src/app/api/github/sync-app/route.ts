@@ -42,10 +42,15 @@ export async function POST() {
     // Fetch repos from GitHub API using installation token
     console.log(`Fetching repos for installation ${installationId}...`)
     const repos = await listInstallationRepos(installationId)
-    console.log(`Found ${repos.length} repositories`)
+    console.log(`Found ${repos.length} repositories to sync`)
+
+    let syncedCount = 0
+    let errorCount = 0
 
     // Sync repos
     for (const repo of repos) {
+      try {
+        console.log(`Syncing repo: ${repo.name}`)
       // Fetch languages for this repo
       let languages = null
       if (repo.languages_url) {
@@ -94,44 +99,55 @@ export async function POST() {
         console.error(`Failed to fetch commits for ${repo.name}:`, err)
       }
 
-      await prisma.repo.upsert({
-        where: {
-          userId_name: {
+        await prisma.repo.upsert({
+          where: {
+            userId_name: {
+              userId: dbUser.id,
+              name: repo.name
+            }
+          },
+          update: {
+            description: repo.description,
+            stars: repo.stargazers_count,
+            commits: commits,
+            lastPushed: new Date(repo.pushed_at),
+            url: repo.html_url,
+            language: repo.language,
+            languages: languages,
+            isPrivate: repo.private,
+            isFork: repo.fork || false,
+          },
+          create: {
             userId: dbUser.id,
-            name: repo.name
+            name: repo.name,
+            description: repo.description,
+            stars: repo.stargazers_count,
+            commits: commits,
+            lastPushed: new Date(repo.pushed_at),
+            url: repo.html_url,
+            language: repo.language,
+            languages: languages,
+            isPrivate: repo.private,
+            isVisible: !repo.private, // Public repos visible by default, private hidden
+            isFork: repo.fork || false,
           }
-        },
-        update: {
-          description: repo.description,
-          stars: repo.stargazers_count,
-          commits: commits,
-          lastPushed: new Date(repo.pushed_at),
-          url: repo.html_url,
-          language: repo.language,
-          languages: languages,
-          isPrivate: repo.private,
-          isFork: repo.fork || false,
-        },
-        create: {
-          userId: dbUser.id,
-          name: repo.name,
-          description: repo.description,
-          stars: repo.stargazers_count,
-          commits: commits,
-          lastPushed: new Date(repo.pushed_at),
-          url: repo.html_url,
-          language: repo.language,
-          languages: languages,
-          isPrivate: repo.private,
-          isVisible: !repo.private, // Public repos visible by default, private hidden
-          isFork: repo.fork || false,
-        }
-      })
+        })
+        
+        syncedCount++
+        console.log(`✓ Synced ${repo.name} (${syncedCount}/${repos.length})`)
+      } catch (err) {
+        errorCount++
+        console.error(`✗ Failed to sync ${repo.name}:`, err)
+      }
     }
+
+    console.log(`Sync complete: ${syncedCount} synced, ${errorCount} errors`)
 
     return NextResponse.json({ 
       success: true, 
-      synced: repos.length 
+      synced: syncedCount,
+      errors: errorCount,
+      total: repos.length
     })
   } catch (error) {
     console.error('Sync error:', error)

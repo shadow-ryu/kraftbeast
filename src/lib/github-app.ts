@@ -145,18 +145,32 @@ export async function listInstallationRepos(
   let page = 1
   const perPage = 100
 
+  console.log(`Fetching repos for installation ${installationId}...`)
+
   while (true) {
+    console.log(`Fetching page ${page}...`)
+    
     const response = await fetchWithInstallationToken(
       installationId,
       `https://api.github.com/installation/repositories?per_page=${perPage}&page=${page}`
     )
 
     if (!response.ok) {
-      throw new Error('Failed to fetch installation repositories')
+      const errorText = await response.text()
+      console.error(`Failed to fetch repos page ${page}:`, errorText)
+      throw new Error(`Failed to fetch installation repositories: ${response.status}`)
     }
 
     const data = await response.json()
     const repos = data.repositories || []
+    
+    console.log(`Page ${page}: Found ${repos.length} repos`)
+    console.log(`Total available: ${data.total_count || 'unknown'}`)
+    
+    // Log first few repo names for debugging
+    if (repos.length > 0) {
+      console.log(`Sample repos on page ${page}:`, repos.slice(0, 3).map((r: GitHubRepo) => r.name))
+    }
     
     if (repos.length === 0) {
       break // No more repos
@@ -166,11 +180,13 @@ export async function listInstallationRepos(
 
     // Check if there are more pages
     if (repos.length < perPage) {
+      console.log(`Last page reached (${repos.length} < ${perPage})`)
       break // Last page
     }
 
     page++
   }
 
+  console.log(`Total repos fetched: ${allRepos.length}`)
   return allRepos
 }

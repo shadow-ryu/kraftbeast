@@ -3,8 +3,8 @@ import { Card } from '@/components/ui/card'
 
 export default function DashboardLoading() {
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <header className="border-b bg-white">
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Skeleton className="h-8 w-32" />
           <Skeleton className="h-8 w-8 rounded-full" />

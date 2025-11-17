@@ -23,6 +23,7 @@ export async function updateProfile(
     const name = formData.get('name') as string
     const bio = formData.get('bio') as string
     const twitterHandle = formData.get('twitterHandle') as string
+    const linkedinUrl = formData.get('linkedinUrl') as string
     const forwardEmail = formData.get('forwardEmail') as string
 
     await prisma.user.update({
@@ -31,6 +32,7 @@ export async function updateProfile(
         name,
         bio,
         twitterHandle,
+        linkedinUrl,
         forwardEmail
       }
     })

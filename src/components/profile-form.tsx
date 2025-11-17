@@ -12,10 +12,11 @@ interface ProfileFormProps {
   name: string
   bio: string
   twitterHandle: string
+  linkedinUrl: string
   forwardEmail: string
 }
 
-export default function ProfileForm({ name, bio, twitterHandle, forwardEmail }: ProfileFormProps) {
+export default function ProfileForm({ name, bio, twitterHandle, linkedinUrl, forwardEmail }: ProfileFormProps) {
   const [state, formAction, isPending] = useActionState(updateProfile, {
     success: false,
     error: null
@@ -53,6 +54,17 @@ export default function ProfileForm({ name, bio, twitterHandle, forwardEmail }: 
             name="twitterHandle"
             defaultValue={twitterHandle}
             placeholder="username (without @)"
+            disabled={isPending}
+          />
+        </div>
+        <div>
+          <Label htmlFor="linkedin">LinkedIn URL</Label>
+          <Input
+            id="linkedin"
+            name="linkedinUrl"
+            type="url"
+            defaultValue={linkedinUrl}
+            placeholder="https://linkedin.com/in/yourprofile"
             disabled={isPending}
           />
         </div>
