@@ -123,21 +123,54 @@ export async function getUserInstallation(
 
 /**
  * List repositories accessible to an installation
+ * Fetches all pages automatically
  */
-export async function listInstallationRepos(
-  installationId: string,
-  page = 1,
-  perPage = 100
-): Promise<any[]> {
-  const response = await fetchWithInstallationToken(
-    installationId,
-    `https://api.github.com/installation/repositories?per_page=${perPage}&page=${page}`
-  )
+interface GitHubRepo {
+  name: string
+  full_name: string
+  description: string | null
+  stargazers_count: number
+  pushed_at: string
+  html_url: string
+  language: string | null
+  languages_url: string
+  private: boolean
+  fork: boolean
+}
 
-  if (!response.ok) {
-    throw new Error('Failed to fetch installation repositories')
+export async function listInstallationRepos(
+  installationId: string
+): Promise<GitHubRepo[]> {
+  const allRepos: GitHubRepo[] = []
+  let page = 1
+  const perPage = 100
+
+  while (true) {
+    const response = await fetchWithInstallationToken(
+      installationId,
+      `https://api.github.com/installation/repositories?per_page=${perPage}&page=${page}`
+    )
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch installation repositories')
+    }
+
+    const data = await response.json()
+    const repos = data.repositories || []
+    
+    if (repos.length === 0) {
+      break // No more repos
+    }
+
+    allRepos.push(...repos)
+
+    // Check if there are more pages
+    if (repos.length < perPage) {
+      break // Last page
+    }
+
+    page++
   }
 
-  const data = await response.json()
-  return data.repositories || []
+  return allRepos
 }

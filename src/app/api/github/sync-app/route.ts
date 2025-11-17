@@ -26,17 +26,23 @@ export async function POST() {
       where: { email }
     })
 
-    if (!dbUser?.githubInstallationId) {
+    if (!dbUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    const installationId = (dbUser as { githubInstallationId?: string | null })?.githubInstallationId
+
+    if (!installationId) {
       return NextResponse.json(
         { error: 'GitHub App not installed. Please install the GitHub App.' },
         { status: 400 }
       )
     }
 
-    const installationId = dbUser.githubInstallationId
-
     // Fetch repos from GitHub API using installation token
+    console.log(`Fetching repos for installation ${installationId}...`)
     const repos = await listInstallationRepos(installationId)
+    console.log(`Found ${repos.length} repositories`)
 
     // Sync repos
     for (const repo of repos) {
