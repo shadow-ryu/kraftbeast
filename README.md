@@ -24,12 +24,39 @@ Hook your GitHub once → every push auto-creates a project card on your portfol
 
 ## Features
 
-- ✅ GitHub OAuth authentication
-- ✅ Automatic repo syncing
-- ✅ Real-time webhook updates
-- ✅ Public portfolio pages
-- ✅ Visit tracking
-- ✅ Clean, minimal UI inspired by IndiePage
+### Core Features
+- ✅ **GitHub App Integration** - Read-only access with automatic syncing
+- ✅ **Real-time Updates** - Webhooks keep your portfolio current
+- ✅ **Private Repo Support** - Showcase private work with README & file browser
+- ✅ **Public Portfolio Pages** - Beautiful, SEO-friendly URLs
+- ✅ **Dark Mode** - Smooth theme transitions
+
+### Portfolio Experience
+- ✅ **Pinned Projects** - Highlight your best work
+- ✅ **Activity Timeline** - Show recent commits with date filtering
+- ✅ **Work History** - Professional experience with drag-and-drop ordering
+- ✅ **Contact Form** - Let visitors reach out directly
+- ✅ **Social Links** - Connect GitHub, Twitter, LinkedIn
+
+### Customization
+- ✅ **Accent Color Picker** - Personalize with your brand color
+- ✅ **Repository Visibility** - Control what's public
+- ✅ **Default Views** - Choose README, Files, or Description
+- ✅ **Timeline Range** - Filter commits by date (7/30/90 days or custom)
+
+### Analytics & Insights
+- ✅ **Portfolio Visits** - Track profile views
+- ✅ **Project Views** - See which repos get attention
+- ✅ **Top Projects** - Identify your most popular work
+- ✅ **Sync Activity Log** - Monitor sync operations
+- ✅ **Sync Status** - Know when your portfolio was last updated
+
+### Privacy & Security
+- ✅ **Read-only Access** - Never writes to your repositories
+- ✅ **Webhook Verification** - Secure signature validation
+- ✅ **Data Export** - Download all your data (GDPR compliant)
+- ✅ **Private Repo Protection** - Content only visible when logged in
+- ✅ **Encrypted API Keys** - Per-user Resend keys stored with AES-256-GCM encryption
 
 ## Getting Started
 
@@ -57,13 +84,24 @@ npm install
 ```bash
 cp .env.local.example .env.local
 ```
-
-Fill in your credentials:
-- `DATABASE_URL`: Your PostgreSQL connection string (Supabase, Railway, Neon, etc.)
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`: Clerk publishable key
-- `CLERK_SECRET_KEY`: Clerk secret key
-- `CLERK_WEBHOOK_SECRET`: Clerk webhook secret
-- `GITHUB_WEBHOOK_SECRET`: GitHub webhook secret
+  Fill in your credentials:
+  DATABASE_URL="postgresql://user:password@localhost:5432/dbname"
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+  CLERK_SECRET_KEY=your_clerk_secret_key
+  CLERK_WEBHOOK_SECRET=your_clerk_webhook_secret
+  NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+  NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+  NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
+  NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
+  GITHUB_APP_ID=your_github_app_id
+  GITHUB_APP_NAME=kraftbeast
+  GITHUB_APP_CLIENT_ID=your_github_app_client_id
+  GITHUB_APP_CLIENT_SECRET=your_github_app_client_secret
+  GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\nyour_private_key_here\n-----END RSA PRIVATE KEY-----"
+  GITHUB_WEBHOOK_SECRET=your_webhook_secret
+  NEXT_PUBLIC_APP_URL=http://localhost:3000
+  RESEND_API_KEY=re_your_api_key_here
+  CRON_SECRET=your_random_secret_key_here
 
 4. Set up the database:
 ```bash
@@ -144,6 +182,38 @@ model Repo {
 
 ## Configuration
 
+### Contact Form Setup
+
+KraftBeast supports two modes for contact forms:
+
+#### For Hosted Users (Recommended)
+Each user provides their own Resend API key for email forwarding:
+
+1. Get your Resend API key from [resend.com/api-keys](https://resend.com/api-keys) (100 emails/day free)
+2. Go to Dashboard → Settings → Contact Form
+3. Enter your key and save
+4. Your key is encrypted with AES-256-GCM and stored securely in the database
+5. Once active, the "Contact Me" section will appear on your public portfolio
+
+**Security Features:**
+- Keys are encrypted at rest using server-side AES-256-GCM
+- Decrypted only at runtime when sending emails
+- Never returned to frontend once stored
+- Uses environment-stored `ENCRYPTION_SECRET` for consistent encryption/decryption
+
+#### For Self-Hosted (Legacy)
+Set a global `RESEND_API_KEY` in your environment variables. This will be used for all users if they haven't configured their own key.
+
+**Environment Variables Required:**
+```bash
+# Encryption key for storing per-user Resend API keys
+# Generate with: openssl rand -base64 32
+ENCRYPTION_SECRET=your_32_byte_random_secret_here
+
+# Optional: Global Resend key for self-hosted (legacy)
+RESEND_API_KEY=re_your_api_key_here
+```
+
 ### Clerk Setup
 
 1. Create a Clerk application
@@ -158,7 +228,7 @@ model Repo {
 
 You can use any PostgreSQL provider:
 
-**Option 1: Supabase (Recommended)**
+**Option 1: Supabase**
 1. Create a Supabase project at [supabase.com](https://supabase.com)
 2. Go to Settings → Database
 3. Copy the connection string (URI format)
@@ -169,7 +239,7 @@ You can use any PostgreSQL provider:
 2. Add PostgreSQL service
 3. Copy connection string
 
-**Option 3: Neon**
+**Option 3: Neon(Recommended)**
 1. Create a project at [neon.tech](https://neon.tech)
 2. Copy connection string
 
@@ -210,16 +280,39 @@ npx prisma migrate dev --name migration_name
 - Returning visitors on portfolio pages
 - Conversion to premium features
 
+## Documentation
+
+- 📖 [User Guide](USER_GUIDE.md) - Complete guide for users
+- 🚀 [Production Features](PRODUCTION_FEATURES.md) - Feature documentation
+- 🔧 [Feature Migration Guide](FEATURE_MIGRATION_GUIDE.md) - Migration instructions
+- ✅ [Deployment Checklist](DEPLOYMENT_CHECKLIST.md) - Production deployment guide
+- 🔍 [Troubleshooting](TROUBLESHOOTING.md) - Common issues and solutions
+- 📧 [Contact Form Setup](CONTACT_FORM_SETUP.md) - Per-user Resend integration guide
+- 🎉 [Implementation Complete](IMPLEMENTATION_COMPLETE.md) - Final summary
+- 🏗️ [Architecture](ARCHITECTURE.md) - System architecture
+- 📝 [TypeScript Fixes](TYPESCRIPT_FIXES.md) - Type-related documentation
+
 ## Roadmap
 
-- [ ] Dribbble integration
-- [ ] Instagram integration
-- [ ] Gumroad integration
+### Completed ✅
+- [x] GitHub App integration
+- [x] Private repo support
+- [x] Project pinning
+- [x] Analytics dashboard
+- [x] README parsing
+- [x] Activity timeline
+- [x] Accent color customization
+- [x] Data export
+
+### Coming Soon 🚧
+- [ ] LinkedIn OAuth integration
+- [ ] Webhook retry background job
+- [ ] Thumbnail upload UI
+- [ ] Historical commit fetching
 - [ ] Custom domains
-- [ ] Analytics dashboard
-- [ ] Premium themes
-- [ ] Project pinning
-- [ ] README parsing
+- [ ] Advanced analytics with charts
+- [ ] Team portfolios
+- [ ] Blog integration
 
 ## License
 

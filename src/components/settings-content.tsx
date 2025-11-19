@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import * as React from 'react'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -10,6 +10,10 @@ import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Github, Twitter, ExternalLink, CheckCircle2, XCircle, Linkedin } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import ResendKeyManager from '@/components/resend-key-manager'
+import { ScrollArea } from './ui/scroll-area'
+import { applyAccent } from '@/lib/theme'
+import WorkHistoryManager from '@/components/work-history-manager'
 
 interface Repo {
   id: string
@@ -18,6 +22,15 @@ interface Repo {
   isVisible: boolean
   description: string | null
   stars: number
+}
+
+interface WorkHistoryItem {
+  id: string
+  title: string
+  company: string
+  startDate: string
+  endDate: string | null
+  bullets: string[]
 }
 
 interface SettingsContentProps {
@@ -30,20 +43,29 @@ interface SettingsContentProps {
     defaultRepoView: string
     timelineRangeFrom: string | null
     timelineRangeTo: string | null
+    accentColor?: string
   }
   repos: Repo[]
+  workHistory: WorkHistoryItem[]
 }
 
-export default function SettingsContent({ user, repos }: SettingsContentProps) {
+export default function SettingsContent({ user, repos, workHistory }: SettingsContentProps) {
   const router = useRouter()
   const [twitterHandle, setTwitterHandle] = useState(user.twitterHandle || '')
   const [forwardEmail, setForwardEmail] = useState(user.forwardEmail || '')
-  const [defaultRepoView, setDefaultRepoView] = useState(user.defaultRepoView || 'readme')
+  const [defaultRepoView, setDefaultRepoView] = useState(user.defaultRepoView || 'readme,files,description')
+  const [accentColor, setAccentColor] = useState(user.accentColor || '#3b82f6')
   const [timelinePreset, setTimelinePreset] = useState<string>('90days')
   const [customFrom, setCustomFrom] = useState<string>('')
   const [customTo, setCustomTo] = useState<string>('')
   const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Apply accent color on mount
+  useEffect(() => {
+    applyAccent(accentColor)
+  }, [])
 
   // Initialize timeline range from user settings
   React.useEffect(() => {
@@ -53,6 +75,39 @@ export default function SettingsContent({ user, repos }: SettingsContentProps) {
       setCustomTo(new Date(user.timelineRangeTo).toISOString().split('T')[0])
     }
   }, [user.timelineRangeFrom, user.timelineRangeTo])
+
+  // Debounced save for accent color
+  const saveAccentColor = useCallback(async (color: string) => {
+    try {
+      const response = await fetch('/api/settings/appearance', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accentColor: color }),
+      })
+
+      if (response.ok) {
+        console.log('Accent color saved:', color)
+      } else {
+        console.error('Failed to save accent color')
+      }
+    } catch (error) {
+      console.error('Error saving accent color:', error)
+    }
+  }, [])
+
+  // Handle accent color change with instant UI update and debounced save
+  const handleAccentColorChange = useCallback((color: string) => {
+    setAccentColor(color)
+    applyAccent(color)
+
+    // Debounce the API call
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      saveAccentColor(color)
+    }, 300)
+  }, [saveAccentColor])
 
   const handleSaveSettings = async () => {
     setIsSaving(true)
@@ -81,7 +136,8 @@ export default function SettingsContent({ user, repos }: SettingsContentProps) {
           forwardEmail, 
           defaultRepoView,
           timelineRangeFrom,
-          timelineRangeTo
+          timelineRangeTo,
+          accentColor
         }),
       })
 
@@ -89,9 +145,12 @@ export default function SettingsContent({ user, repos }: SettingsContentProps) {
         setSaveMessage({ type: 'success', text: 'Settings saved successfully!' })
         router.refresh()
       } else {
-        setSaveMessage({ type: 'error', text: 'Failed to save settings' })
+        const errorData = await response.json()
+        console.error('Settings save error:', errorData)
+        setSaveMessage({ type: 'error', text: errorData.error || 'Failed to save settings' })
       }
-    } catch {
+    } catch (error) {
+      console.error('Settings save exception:', error)
       setSaveMessage({ type: 'error', text: 'An error occurred' })
     } finally {
       setIsSaving(false)
@@ -141,11 +200,11 @@ export default function SettingsContent({ user, repos }: SettingsContentProps) {
                     Public Repositories
                     <Badge variant="secondary">{publicRepos.length}</Badge>
                   </h3>
-                  <div className="space-y-2">
+                  <ScrollArea className="h-[300px] ">
                     {publicRepos.map((repo) => (
                       <div 
                         key={repo.id}
-                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-neutral-50"
+                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-neutral-50 my-1"
                       >
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
@@ -165,7 +224,7 @@ export default function SettingsContent({ user, repos }: SettingsContentProps) {
                         </div>
                       </div>
                     ))}
-                  </div>
+                  </ScrollArea>
                 </div>
               )}
 
@@ -176,11 +235,11 @@ export default function SettingsContent({ user, repos }: SettingsContentProps) {
                     Private Repositories
                     <Badge variant="secondary">{privateRepos.length}</Badge>
                   </h3>
-                  <div className="space-y-2">
+                  <ScrollArea className="h-[300px]">
                     {privateRepos.map((repo) => (
                       <div 
                         key={repo.id}
-                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-neutral-50"
+                        className="flex items-center my-1 justify-between p-3 border rounded-lg hover:bg-neutral-50"
                       >
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
@@ -200,7 +259,7 @@ export default function SettingsContent({ user, repos }: SettingsContentProps) {
                         </div>
                       </div>
                     ))}
-                  </div>
+                  </ScrollArea>
                 </div>
               )}
             </div>
@@ -328,6 +387,97 @@ export default function SettingsContent({ user, repos }: SettingsContentProps) {
         </Card>
       </section>
 
+      {/* Appearance Section */}
+      <section>
+        <Card className="p-6">
+          <h2 className="text-xl font-bold mb-4">Appearance</h2>
+          <p className="text-sm text-neutral-600 mb-6">
+            Customize the look of your portfolio
+          </p>
+
+          <div className="space-y-4">
+            <div>
+              <Label>Accent Color</Label>
+              <p className="text-sm text-neutral-600 mb-3">
+                Choose a color that represents your brand
+              </p>
+              <div className="grid grid-cols-5 gap-2">
+                {[
+                  { name: 'Blue', value: '#3b82f6' },
+                  { name: 'Purple', value: '#a855f7' },
+                  { name: 'Pink', value: '#ec4899' },
+                  { name: 'Red', value: '#ef4444' },
+                  { name: 'Orange', value: '#f97316' },
+                  { name: 'Yellow', value: '#eab308' },
+                  { name: 'Green', value: '#22c55e' },
+                  { name: 'Teal', value: '#14b8a6' },
+                  { name: 'Cyan', value: '#06b6d4' },
+                  { name: 'Indigo', value: '#6366f1' },
+                ].map((color) => (
+                  <button
+                    key={color.value}
+                    onClick={() => handleAccentColorChange(color.value)}
+                    className={`h-10 rounded-lg border-2 transition-all ${
+                      accentColor === color.value
+                        ? 'border-neutral-900 scale-110'
+                        : 'border-neutral-200 hover:scale-105'
+                    }`}
+                    style={{ backgroundColor: color.value }}
+                    title={color.name}
+                  />
+                ))}
+              </div>
+              <div className="flex gap-2 mt-3">
+                <input
+                  type="color"
+                  value={accentColor}
+                  onChange={(e) => handleAccentColorChange(e.target.value)}
+                  className="h-10 w-20 rounded-lg border border-neutral-300 cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={accentColor}
+                  onChange={(e) => handleAccentColorChange(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-neutral-300 rounded-lg"
+                  placeholder="#3b82f6"
+                />
+              </div>
+            </div>
+
+            <Button 
+              onClick={handleSaveSettings}
+              disabled={isSaving}
+              className="w-full"
+            >
+              {isSaving ? 'Saving...' : 'Save Appearance'}
+            </Button>
+
+            {saveMessage && (
+              <p className={`text-sm ${saveMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                {saveMessage.text}
+              </p>
+            )}
+          </div>
+        </Card>
+      </section>
+
+      {/* Contact Form Section */}
+      <section>
+        <Card className="p-6">
+          <h2 className="text-xl font-bold mb-4">Contact Form</h2>
+          <p className="text-sm text-neutral-600 mb-6">
+            Enable visitors to contact you through your portfolio. Requires your own Resend API key.
+          </p>
+
+          <ResendKeyManager />
+        </Card>
+      </section>
+
+      {/* Work History Section */}
+      <section>
+        <WorkHistoryManager workHistory={workHistory} />
+      </section>
+
       {/* Contact & Social Section */}
       <section>
         <Card className="p-6">
@@ -376,20 +526,74 @@ export default function SettingsContent({ user, repos }: SettingsContentProps) {
             </div>
 
             <div>
-              <Label htmlFor="defaultRepoView">Default Private Repo View</Label>
-              <p className="text-sm text-neutral-600 mb-2">
-                Choose which tab opens first when viewing private repositories
+              <Label>Private Repo View Options</Label>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-3">
+                Choose which tabs to show when viewing private repositories
               </p>
-              <select
-                id="defaultRepoView"
-                value={defaultRepoView}
-                onChange={(e) => setDefaultRepoView(e.target.value)}
-                className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-neutral-900"
-              >
-                <option value="readme">README</option>
-                <option value="files">Files</option>
-                <option value="description">Description</option>
-              </select>
+              <div className="space-y-3">
+                <label className="flex items-center gap-3 p-3 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800 cursor-pointer transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={defaultRepoView.includes('readme')}
+                    onChange={(e) => {
+                      const views = defaultRepoView.split(',').filter(v => v)
+                      if (e.target.checked) {
+                        setDefaultRepoView([...views, 'readme'].join(','))
+                      } else {
+                        setDefaultRepoView(views.filter(v => v !== 'readme').join(','))
+                      }
+                    }}
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-neutral-900 dark:text-neutral-100">📄 README</div>
+                    <div className="text-sm text-neutral-600 dark:text-neutral-400">Show repository documentation</div>
+                  </div>
+                </label>
+
+                <label className="flex items-center gap-3 p-3 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800 cursor-pointer transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={defaultRepoView.includes('files')}
+                    onChange={(e) => {
+                      const views = defaultRepoView.split(',').filter(v => v)
+                      if (e.target.checked) {
+                        setDefaultRepoView([...views, 'files'].join(','))
+                      } else {
+                        setDefaultRepoView(views.filter(v => v !== 'files').join(','))
+                      }
+                    }}
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-neutral-900 dark:text-neutral-100">📁 Files</div>
+                    <div className="text-sm text-neutral-600 dark:text-neutral-400">Browse file structure</div>
+                  </div>
+                </label>
+
+                <label className="flex items-center gap-3 p-3 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800 cursor-pointer transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={defaultRepoView.includes('description')}
+                    onChange={(e) => {
+                      const views = defaultRepoView.split(',').filter(v => v)
+                      if (e.target.checked) {
+                        setDefaultRepoView([...views, 'description'].join(','))
+                      } else {
+                        setDefaultRepoView(views.filter(v => v !== 'description').join(','))
+                      }
+                    }}
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-neutral-900 dark:text-neutral-100">ℹ️ Description</div>
+                    <div className="text-sm text-neutral-600 dark:text-neutral-400">Show project information and stats</div>
+                  </div>
+                </label>
+              </div>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-3">
+                Selected tabs will be available when viewing private repositories
+              </p>
             </div>
 
             <Button 
@@ -413,7 +617,7 @@ export default function SettingsContent({ user, repos }: SettingsContentProps) {
       <section>
         <Card className="p-6">
           <h2 className="text-xl font-bold mb-4">Timeline Range</h2>
-          <p className="text-sm text-neutral-600 mb-6">
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-6">
             Control which commits appear on your portfolio timeline
           </p>
 
@@ -493,19 +697,77 @@ export default function SettingsContent({ user, repos }: SettingsContentProps) {
               </div>
             )}
 
-            <Button 
-              onClick={handleSaveSettings}
-              disabled={isSaving}
-              className="w-full"
-            >
-              {isSaving ? 'Saving...' : 'Save Timeline Range'}
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleSaveSettings}
+                disabled={isSaving}
+                className="flex-1"
+              >
+                {isSaving ? 'Saving...' : 'Save Timeline Range'}
+              </Button>
+              <Button 
+                onClick={async () => {
+                  setIsSaving(true)
+                  try {
+                    const response = await fetch('/api/timeline/backfill', { method: 'POST' })
+                    if (response.ok) {
+                      const data = await response.json()
+                      setSaveMessage({ 
+                        type: 'success', 
+                        text: `Populated timeline with ${data.totalCommits} commits from ${data.repos} repositories!` 
+                      })
+                      router.refresh()
+                    } else {
+                      setSaveMessage({ type: 'error', text: 'Failed to populate timeline' })
+                    }
+                  } catch {
+                    setSaveMessage({ type: 'error', text: 'An error occurred' })
+                  } finally {
+                    setIsSaving(false)
+                  }
+                }}
+                disabled={isSaving}
+                variant="outline"
+                className="flex-1"
+              >
+                {isSaving ? 'Loading...' : 'Populate Timeline'}
+              </Button>
+            </div>
 
             {saveMessage && (
               <p className={`text-sm ${saveMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
                 {saveMessage.text}
               </p>
             )}
+            
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              💡 Tip: Click &quot;Populate Timeline&quot; to fetch recent commits from your repositories
+            </p>
+          </div>
+        </Card>
+      </section>
+
+      {/* Privacy & Data Section */}
+      <section>
+        <Card className="p-6">
+          <h2 className="text-xl font-bold mb-4">Privacy & Data</h2>
+          <p className="text-sm text-neutral-600 mb-6">
+            Manage your data and privacy settings
+          </p>
+
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-semibold mb-2">Export Your Data</h3>
+              <p className="text-sm text-neutral-600 mb-3">
+                Download all your KraftBeast data including profile, repositories, work history, and timeline.
+              </p>
+              <Button 
+                variant="outline"
+                onClick={() => window.location.href = '/api/user/export'}
+              >
+                Download Data (JSON)
+              </Button>
+            </div>
           </div>
         </Card>
       </section>

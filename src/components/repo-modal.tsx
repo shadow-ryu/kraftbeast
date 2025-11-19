@@ -35,8 +35,12 @@ interface FileNode {
   children?: FileNode[]
 }
 
-export default function RepoModal({ isOpen, onClose, repo, defaultTab = 'readme' }: RepoModalProps) {
-  const [activeTab, setActiveTab] = useState(defaultTab)
+export default function RepoModal({ isOpen, onClose, repo, defaultTab = 'readme,files,description' }: RepoModalProps) {
+  // Parse enabled tabs from defaultTab (comma-separated string)
+  const enabledTabs = defaultTab.split(',').filter(t => t)
+  const firstTab = enabledTabs[0] || 'readme'
+  
+  const [activeTab, setActiveTab] = useState(firstTab)
   const [readmeContent, setReadmeContent] = useState<string | null>(null)
   const [fileStructure, setFileStructure] = useState<FileNode[] | null>(null)
   const [loading, setLoading] = useState(false)
@@ -44,9 +48,13 @@ export default function RepoModal({ isOpen, onClose, repo, defaultTab = 'readme'
 
   useEffect(() => {
     if (isOpen) {
-      setActiveTab(defaultTab)
+      setActiveTab(firstTab)
+      // Reset content when modal opens
+      setReadmeContent(null)
+      setFileStructure(null)
+      setError(null)
     }
-  }, [isOpen, defaultTab])
+  }, [isOpen, firstTab])
 
   useEffect(() => {
     if (isOpen && activeTab === 'readme' && !readmeContent) {
@@ -67,10 +75,12 @@ export default function RepoModal({ isOpen, onClose, repo, defaultTab = 'readme'
         const data = await response.json()
         setReadmeContent(data.content)
       } else {
-        setError('README not accessible')
+        const errorData = await response.json()
+        setError(errorData.details || errorData.error || 'README not accessible')
       }
-    } catch {
-      setError('Failed to fetch README')
+    } catch (err) {
+      console.error('README fetch error:', err)
+      setError('Failed to fetch README. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -83,12 +93,18 @@ export default function RepoModal({ isOpen, onClose, repo, defaultTab = 'readme'
       const response = await fetch(`/api/repos/${repo.id}/files`)
       if (response.ok) {
         const data = await response.json()
-        setFileStructure(data.tree)
+        if (data.tree && data.tree.length === 0) {
+          setError('Repository is empty')
+        } else {
+          setFileStructure(data.tree)
+        }
       } else {
-        setError('File structure not accessible')
+        const errorData = await response.json()
+        setError(errorData.details || errorData.error || 'File structure not accessible')
       }
-    } catch {
-      setError('Failed to fetch file structure')
+    } catch (err) {
+      console.error('Files fetch error:', err)
+      setError('Failed to fetch file structure. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -128,39 +144,45 @@ export default function RepoModal({ isOpen, onClose, repo, defaultTab = 'readme'
         {/* Tabs */}
         <div className="border-b dark:border-neutral-800">
           <div className="flex gap-1 px-6">
-            <button
-              className={`px-4 py-3 font-medium border-b-2 transition-colors ${
-                activeTab === 'readme'
-                  ? 'border-neutral-900 dark:border-white text-neutral-900 dark:text-white'
-                  : 'border-transparent text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
-              }`}
-              onClick={() => setActiveTab('readme')}
-            >
-              <FileText className="h-4 w-4 inline mr-2" />
-              README
-            </button>
-            <button
-              className={`px-4 py-3 font-medium border-b-2 transition-colors ${
-                activeTab === 'files'
-                  ? 'border-neutral-900 dark:border-white text-neutral-900 dark:text-white'
-                  : 'border-transparent text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
-              }`}
-              onClick={() => setActiveTab('files')}
-            >
-              <FolderTree className="h-4 w-4 inline mr-2" />
-              Files
-            </button>
-            <button
-              className={`px-4 py-3 font-medium border-b-2 transition-colors ${
-                activeTab === 'description'
-                  ? 'border-neutral-900 dark:border-white text-neutral-900 dark:text-white'
-                  : 'border-transparent text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
-              }`}
-              onClick={() => setActiveTab('description')}
-            >
-              <Info className="h-4 w-4 inline mr-2" />
-              Description
-            </button>
+            {enabledTabs.includes('readme') && (
+              <button
+                className={`px-4 py-3 font-medium border-b-2 transition-colors ${
+                  activeTab === 'readme'
+                    ? 'border-neutral-900 dark:border-white text-neutral-900 dark:text-white'
+                    : 'border-transparent text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                }`}
+                onClick={() => setActiveTab('readme')}
+              >
+                <FileText className="h-4 w-4 inline mr-2" />
+                README
+              </button>
+            )}
+            {enabledTabs.includes('files') && (
+              <button
+                className={`px-4 py-3 font-medium border-b-2 transition-colors ${
+                  activeTab === 'files'
+                    ? 'border-neutral-900 dark:border-white text-neutral-900 dark:text-white'
+                    : 'border-transparent text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                }`}
+                onClick={() => setActiveTab('files')}
+              >
+                <FolderTree className="h-4 w-4 inline mr-2" />
+                Files
+              </button>
+            )}
+            {enabledTabs.includes('description') && (
+              <button
+                className={`px-4 py-3 font-medium border-b-2 transition-colors ${
+                  activeTab === 'description'
+                    ? 'border-neutral-900 dark:border-white text-neutral-900 dark:text-white'
+                    : 'border-transparent text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                }`}
+                onClick={() => setActiveTab('description')}
+              >
+                <Info className="h-4 w-4 inline mr-2" />
+                Description
+              </button>
+            )}
           </div>
         </div>
 
@@ -168,9 +190,76 @@ export default function RepoModal({ isOpen, onClose, repo, defaultTab = 'readme'
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
           {activeTab === 'readme' && (
             <div>
-              {loading && <p className="text-neutral-600 dark:text-neutral-400">Loading README...</p>}
-              {error && <p className="text-red-600 dark:text-red-400">{error}</p>}
-              {readmeContent && (
+              {loading && (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-900 dark:border-white mx-auto mb-4"></div>
+                    <p className="text-neutral-600 dark:text-neutral-400">Loading README...</p>
+                  </div>
+                </div>
+              )}
+              {error && !loading && (
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
+                  <div className="text-center mb-4">
+                    <p className="text-yellow-800 dark:text-yellow-200 font-medium mb-2">{error}</p>
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                      {error.includes('permission') || error.includes('403') ? (
+                        <>
+                          The GitHub App needs access to this repository. 
+                          <a 
+                            href="https://github.com/settings/installations" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="underline font-medium ml-1"
+                          >
+                            Configure app permissions →
+                          </a>
+                        </>
+                      ) : (
+                        'This repository may not have a README file, or it may not be accessible at this time.'
+                      )}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 justify-center flex-wrap">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={fetchReadme}
+                    >
+                      Try Again
+                    </Button>
+                    {enabledTabs.includes('description') && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setActiveTab('description')}
+                      >
+                        View Description
+                      </Button>
+                    )}
+                    {(error.includes('permission') || error.includes('403')) && (
+                      <Button 
+                        variant="default" 
+                        size="sm" 
+                        onClick={() => window.open('https://github.com/settings/installations', '_blank')}
+                      >
+                        Fix Permissions
+                      </Button>
+                    )}
+                  </div>
+                  <details className="mt-4 text-xs">
+                    <summary className="cursor-pointer text-yellow-700 dark:text-yellow-300 hover:underline">
+                      Debug Info
+                    </summary>
+                    <div className="mt-2 p-3 bg-yellow-100 dark:bg-yellow-900/40 rounded text-left font-mono">
+                      <p>Repo: {repo.name}</p>
+                      <p>Private: {repo.isPrivate ? 'Yes' : 'No'}</p>
+                      <p>Error: {error}</p>
+                    </div>
+                  </details>
+                </div>
+              )}
+              {readmeContent && !loading && (
                 <article className="prose dark:prose-invert max-w-none">
                   <ReactMarkdown 
                     remarkPlugins={[remarkGfm]} 
@@ -180,14 +269,91 @@ export default function RepoModal({ isOpen, onClose, repo, defaultTab = 'readme'
                   </ReactMarkdown>
                 </article>
               )}
+              {!loading && !error && !readmeContent && (
+                <div className="text-center py-12 text-neutral-500 dark:text-neutral-400">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Click a tab to view repository content</p>
+                </div>
+              )}
             </div>
           )}
 
           {activeTab === 'files' && (
             <div>
-              {loading && <p className="text-neutral-600 dark:text-neutral-400">Loading file structure...</p>}
-              {error && <p className="text-red-600 dark:text-red-400">{error}</p>}
-              {fileStructure && <FileTree tree={fileStructure} />}
+              {loading && (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-900 dark:border-white mx-auto mb-4"></div>
+                    <p className="text-neutral-600 dark:text-neutral-400">Loading file structure...</p>
+                  </div>
+                </div>
+              )}
+              {error && !loading && (
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
+                  <div className="text-center mb-4">
+                    <p className="text-yellow-800 dark:text-yellow-200 font-medium mb-2">{error}</p>
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                      {error.includes('permission') || error.includes('403') ? (
+                        <>
+                          The GitHub App needs access to this repository. 
+                          <a 
+                            href="https://github.com/settings/installations" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="underline font-medium ml-1"
+                          >
+                            Configure app permissions →
+                          </a>
+                        </>
+                      ) : (
+                        'Unable to load the file structure at this time.'
+                      )}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 justify-center flex-wrap">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={fetchFileStructure}
+                    >
+                      Try Again
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setActiveTab('description')}
+                    >
+                      View Description
+                    </Button>
+                    {(error.includes('permission') || error.includes('403')) && (
+                      <Button 
+                        variant="default" 
+                        size="sm" 
+                        onClick={() => window.open('https://github.com/settings/installations', '_blank')}
+                      >
+                        Fix Permissions
+                      </Button>
+                    )}
+                  </div>
+                  <details className="mt-4 text-xs">
+                    <summary className="cursor-pointer text-yellow-700 dark:text-yellow-300 hover:underline">
+                      Debug Info
+                    </summary>
+                    <div className="mt-2 p-3 bg-yellow-100 dark:bg-yellow-900/40 rounded text-left font-mono">
+                      <p>Repo: {repo.name}</p>
+                      <p>Private: {repo.isPrivate ? 'Yes' : 'No'}</p>
+                      <p>Error: {error}</p>
+                    </div>
+                  </details>
+                </div>
+              )}
+              {fileStructure && !loading && <FileTree tree={fileStructure} />}
+              {!loading && !error && !fileStructure && (
+                <div className="text-center py-12 text-neutral-500 dark:text-neutral-400">
+                  <FolderTree className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Click a tab to view repository content</p>
+                </div>
+              )}
             </div>
           )}
 

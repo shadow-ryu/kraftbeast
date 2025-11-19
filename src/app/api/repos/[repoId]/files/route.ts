@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { fetchWithInstallationToken } from '@/lib/github-app'
 
 export async function GET(
   request: NextRequest,
@@ -24,7 +25,10 @@ export async function GET(
       return NextResponse.json({ error: 'Repo not found' }, { status: 404 })
     }
 
-    if (!repo.user.githubToken) {
+    const installationId = (repo.user as { githubInstallationId?: string | null })?.githubInstallationId
+    const githubToken = repo.user.githubToken
+
+    if (!installationId && !githubToken) {
       return NextResponse.json(
         { error: 'GitHub not connected' },
         { status: 400 }
@@ -33,21 +37,71 @@ export async function GET(
 
     // Fetch file tree from GitHub API
     const treeUrl = `https://api.github.com/repos/${repo.user.githubHandle}/${repo.name}/git/trees/HEAD?recursive=1`
-    const response = await fetch(treeUrl, {
-      headers: {
-        'Authorization': `Bearer ${repo.user.githubToken}`,
-        'Accept': 'application/vnd.github.v3+json',
-      },
-    })
+    
+    console.log(`Fetching files for ${repo.user.githubHandle}/${repo.name}`)
+    console.log(`Using ${installationId ? 'GitHub App' : 'OAuth'} token`)
+    
+    let response: Response
+    if (installationId) {
+      // Use GitHub App token
+      try {
+        response = await fetchWithInstallationToken(installationId, treeUrl)
+      } catch (error) {
+        console.error('GitHub App token error:', error)
+        return NextResponse.json(
+          { 
+            error: 'Failed to authenticate with GitHub',
+            details: 'GitHub App installation may need to be refreshed. Try reconnecting your GitHub account.'
+          },
+          { status: 500 }
+        )
+      }
+    } else {
+      // Fallback to OAuth token
+      response = await fetch(treeUrl, {
+        headers: {
+          'Authorization': `Bearer ${githubToken}`,
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      })
+    }
 
     if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`GitHub API error (${response.status}):`, errorText)
+      console.error(`Repo: ${repo.user.githubHandle}/${repo.name}, Private: ${repo.isPrivate}`)
+      
+      let details = 'Access denied or rate limited'
+      if (response.status === 404) {
+        details = 'Repository may be empty, branch not found, or GitHub App needs repository access'
+      } else if (response.status === 403) {
+        details = 'GitHub App does not have permission to access this repository. Please reinstall the app with proper permissions.'
+      } else if (response.status === 401) {
+        details = 'Authentication failed. Please reconnect your GitHub account.'
+      }
+      
       return NextResponse.json(
-        { error: 'File structure not accessible' },
-        { status: 404 }
+        { 
+          error: 'File structure not accessible',
+          details,
+          statusCode: response.status
+        },
+        { status: response.status }
       )
     }
 
     const data = await response.json()
+    
+    // Check if tree exists and has items
+    if (!data.tree || data.tree.length === 0) {
+      return NextResponse.json(
+        { 
+          error: 'Repository is empty',
+          tree: []
+        },
+        { status: 200 }
+      )
+    }
     
     // Build a tree structure from flat list
     const tree = buildTree(data.tree)

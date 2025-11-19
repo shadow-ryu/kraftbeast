@@ -12,18 +12,33 @@ export default function SyncButton() {
   const handleSync = async () => {
     setSyncing(true)
     try {
-      const response = await fetch('/api/github/sync', {
+      // Try GitHub App sync first
+      let response = await fetch('/api/github/sync-app', {
         method: 'POST',
       })
       
+      // Fallback to OAuth sync if App sync fails
+      if (!response.ok && response.status === 400) {
+        response = await fetch('/api/github/sync', {
+          method: 'POST',
+        })
+      }
+      
       if (response.ok) {
+        const data = await response.json()
+        console.log('Sync result:', data)
         router.refresh()
+        if (data.synced !== undefined) {
+          alert(`Successfully synced ${data.synced} repositories!`)
+        }
       } else {
-        alert('Failed to sync repositories')
+        const errorData = await response.json()
+        console.error('Sync error:', errorData)
+        alert(errorData.error || 'Failed to sync repositories')
       }
     } catch (error) {
-      console.error('Sync error:', error)
-      alert('Failed to sync repositories')
+      console.error('Sync exception:', error)
+      alert('Failed to sync repositories. Check console for details.')
     } finally {
       setSyncing(false)
     }

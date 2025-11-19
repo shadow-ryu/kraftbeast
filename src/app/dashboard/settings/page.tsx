@@ -18,6 +18,9 @@ export default async function SettingsPage() {
     include: { 
       repos: { 
         orderBy: { lastPushed: 'desc' } 
+      },
+      workHistory: {
+        orderBy: { order: 'asc' }
       }
     }
   })
@@ -31,7 +34,10 @@ export default async function SettingsPage() {
         name: fullName,
         avatarUrl: user.imageUrl,
       },
-      include: { repos: { orderBy: { lastPushed: 'desc' } } }
+      include: { 
+        repos: { orderBy: { lastPushed: 'desc' } },
+        workHistory: { orderBy: { order: 'asc' } }
+      }
     })
   }
 
@@ -70,6 +76,7 @@ export default async function SettingsPage() {
             defaultRepoView: (dbUser as { defaultRepoView?: string })?.defaultRepoView || 'readme',
             timelineRangeFrom: (dbUser as { timelineRangeFrom?: Date | null })?.timelineRangeFrom?.toISOString() || null,
             timelineRangeTo: (dbUser as { timelineRangeTo?: Date | null })?.timelineRangeTo?.toISOString() || null,
+            accentColor: (dbUser as { accentColor?: string })?.accentColor || '#3b82f6',
           }}
           repos={(dbUser?.repos || []).map(repo => ({
             id: repo.id,
@@ -78,6 +85,14 @@ export default async function SettingsPage() {
             isVisible: repo.isVisible,
             description: repo.description,
             stars: repo.stars
+          }))}
+          workHistory={(dbUser?.workHistory || []).map(work => ({
+            id: work.id,
+            title: work.title,
+            company: work.company,
+            startDate: work.startDate,
+            endDate: work.endDate,
+            bullets: work.bullets
           }))}
         />
       </div>

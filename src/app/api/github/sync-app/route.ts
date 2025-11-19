@@ -143,6 +143,23 @@ export async function POST() {
 
     console.log(`Sync complete: ${syncedCount} synced, ${errorCount} errors`)
 
+    // Update last synced timestamp
+    await prisma.user.update({
+      where: { id: dbUser.id },
+      data: { lastSyncedAt: new Date() }
+    })
+
+    // Log sync activity
+    await prisma.syncLog.create({
+      data: {
+        userId: dbUser.id,
+        status: errorCount === 0 ? 'success' : errorCount < repos.length ? 'partial' : 'error',
+        reposSynced: syncedCount,
+        errors: errorCount,
+        message: `Synced ${syncedCount} of ${repos.length} repositories`
+      }
+    })
+
     return NextResponse.json({ 
       success: true, 
       synced: syncedCount,

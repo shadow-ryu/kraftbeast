@@ -224,3 +224,36 @@
 .prose em {
   @apply italic;
 }
+
+/* Custom Accent Color Styles */
+:root {
+  --accent-color: #3b82f6;
+}
+
+/* Apply accent color to various elements */
+a[class*="text-blue"] {
+  color: var(--accent-color, #3b82f6) !important;
+}
+
+.text-accent {
+  color: var(--accent-color, #3b82f6);
+}
+
+.bg-accent {
+  background-color: var(--accent-color, #3b82f6);
+}
+
+.border-accent {
+  border-color: var(--accent-color, #3b82f6);
+}
+
+/* Override scrollbar thumb with accent color */
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--accent-color, #00ff88);
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-color, #00dd77);
+  filter: brightness(0.9);
+}
+

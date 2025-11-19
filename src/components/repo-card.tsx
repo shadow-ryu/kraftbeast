@@ -27,7 +27,14 @@ interface RepoCardProps {
 export default function RepoCard({ repo, githubHandle, defaultTab = 'readme' }: RepoCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const handleCardClick = () => {
+  const handleCardClick = async () => {
+    // Track view
+    try {
+      await fetch(`/api/repos/${repo.id}/view`, { method: 'POST' })
+    } catch (error) {
+      console.error('Failed to track view:', error)
+    }
+
     if (repo.isPrivate) {
       setIsModalOpen(true)
     } else {

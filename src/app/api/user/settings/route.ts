@@ -10,7 +10,7 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json()
-    const { twitterHandle, forwardEmail, defaultRepoView, timelineRangeFrom, timelineRangeTo } = body
+    const { twitterHandle, forwardEmail, defaultRepoView, timelineRangeFrom, timelineRangeTo, accentColor } = body
 
     const user = await prisma.user.update({
       where: { clerkId: userId },
@@ -19,7 +19,8 @@ export async function PATCH(request: Request) {
         ...(forwardEmail !== undefined && { forwardEmail: forwardEmail || null }),
         ...(defaultRepoView !== undefined && { defaultRepoView }),
         ...(timelineRangeFrom !== undefined && { timelineRangeFrom: timelineRangeFrom ? new Date(timelineRangeFrom) : null }),
-        ...(timelineRangeTo !== undefined && { timelineRangeTo: timelineRangeTo ? new Date(timelineRangeTo) : null })
+        ...(timelineRangeTo !== undefined && { timelineRangeTo: timelineRangeTo ? new Date(timelineRangeTo) : null }),
+        ...(accentColor !== undefined && { accentColor })
       }
     })
 

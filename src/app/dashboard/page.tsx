@@ -12,6 +12,8 @@ import SyncButton from '@/components/sync-button'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { GitHubAppMigrationBanner } from '@/components/github-app-migration-banner'
 import { GitHubConnectButton } from '@/components/github-connect-button'
+import { SyncStatus } from '@/components/sync-status'
+import { PinToggle } from '@/components/pin-toggle'
 
 export default async function DashboardPage() {
   const { userId } = await auth()
@@ -22,7 +24,15 @@ export default async function DashboardPage() {
   // Get or create user in database
   let dbUser = await prisma.user.findUnique({
     where: { email: user?.emailAddresses[0]?.emailAddress },
-    include: { repos: { orderBy: { lastPushed: 'desc' } } }
+    include: { 
+      repos: { 
+        orderBy: [
+          { isPinned: 'desc' },
+          { pinnedOrder: 'asc' },
+          { lastPushed: 'desc' }
+        ]
+      } 
+    }
   })
 
   if (!dbUser && user?.emailAddresses[0]?.emailAddress) {
@@ -42,7 +52,7 @@ export default async function DashboardPage() {
     : null
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" style={{ '--accent-color': (dbUser as { accentColor?: string })?.accentColor || '#3b82f6' } as React.CSSProperties}>
       {/* Header */}
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
@@ -80,6 +90,9 @@ export default async function DashboardPage() {
             </p>
           </div>
           <div className="flex gap-2">
+            <Link href="/dashboard/analytics">
+              <Button variant="outline">Analytics</Button>
+            </Link>
             <Link href="/dashboard/profile">
               <Button variant="outline">Edit Profile</Button>
             </Link>
@@ -138,6 +151,7 @@ export default async function DashboardPage() {
                 )}
               </span>
             </div>
+            <SyncStatus lastSyncedAt={(dbUser as { lastSyncedAt?: Date | null })?.lastSyncedAt || null} />
             <SyncButton />
           </div>
         )}
@@ -145,7 +159,62 @@ export default async function DashboardPage() {
         {/* Repos List */}
         {dbUser?.githubConnected && (
           <div>
-            <h2 className="text-2xl font-bold mb-4">Your Repositories</h2>
+            {/* Pinned Repos Section */}
+            {dbUser?.repos.some((r: { isPinned?: boolean }) => r.isPinned) && (
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold mb-4">📌 Pinned Projects</h2>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {dbUser?.repos
+                    .filter((repo: { isPinned?: boolean }) => repo.isPinned)
+                    .map((repo: { id: string; name: string; description: string | null; stars: number; commits: number; language: string | null; isPrivate: boolean; isVisible: boolean; isFork?: boolean; isPinned?: boolean; url: string }) => (
+                      <Card key={repo.id} className="p-4 hover:shadow-md transition-shadow relative border-2 border-yellow-200 bg-yellow-50/30">
+                        <div className="absolute top-2 right-2">
+                          <PinToggle repoId={repo.id} isPinned={repo.isPinned || false} />
+                        </div>
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex items-center gap-2 flex-wrap pr-8">
+                            <h3 className="font-semibold">{repo.name}</h3>
+                            {repo.isPrivate && (
+                              <Badge variant="outline" className="text-xs">👾 Private</Badge>
+                            )}
+                            {repo.isFork && (
+                              <Badge variant="outline" className="text-xs bg-gray-50 text-gray-600 border-gray-300">🍴 Forked</Badge>
+                            )}
+                          </div>
+                          <Badge variant="secondary" className="flex items-center gap-1">
+                            <Star className="h-3 w-3" />
+                            {repo.stars}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-neutral-600 mb-3 line-clamp-2">
+                          {repo.description || 'No description'}
+                        </p>
+                        <div className="flex justify-between items-center text-xs text-neutral-500 mb-3">
+                          <span>{repo.language || 'Unknown'}</span>
+                          <span>{repo.commits} commits</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <a 
+                            href={repo.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                          >
+                            View on GitHub
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                          <VisibilityToggle 
+                            repoId={repo.id} 
+                            isVisible={repo.isVisible}
+                          />
+                        </div>
+                      </Card>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            <h2 className="text-2xl font-bold mb-4">All Repositories</h2>
             {dbUser?.repos.length === 0 ? (
               <Card className="p-8 text-center">
                 <Github className="h-12 w-12 mx-auto mb-4 text-neutral-400" />
@@ -155,10 +224,15 @@ export default async function DashboardPage() {
               </Card>
             ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {dbUser?.repos.map((repo: { id: string; name: string; description: string | null; stars: number; commits: number; language: string | null; isPrivate: boolean; isVisible: boolean; isFork?: boolean; url: string }) => (
+              {dbUser?.repos
+                .filter((repo: { isPinned?: boolean }) => !repo.isPinned)
+                .map((repo: { id: string; name: string; description: string | null; stars: number; commits: number; language: string | null; isPrivate: boolean; isVisible: boolean; isFork?: boolean; isPinned?: boolean; url: string }) => (
                 <Card key={repo.id} className="p-4 hover:shadow-md transition-shadow relative">
+                  <div className="absolute top-2 right-2">
+                    <PinToggle repoId={repo.id} isPinned={repo.isPinned || false} />
+                  </div>
                   <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap pr-8">
                       <h3 className="font-semibold">{repo.name}</h3>
                       {repo.isPrivate && (
                         <Badge variant="outline" className="text-xs">👾 Private</Badge>

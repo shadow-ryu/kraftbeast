@@ -1,8 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
+import { decryptUserData } from '@/lib/encryption'
 
 export async function POST(request: Request) {
   try {
@@ -16,26 +15,50 @@ export async function POST(request: Request) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { githubHandle: username }
+      where: { githubHandle: username },
+      select: {
+        id: true,
+        clerkId: true,
+        forwardEmail: true,
+        resendApiKey: true
+      }
     })
 
-    console.log('User found:', { id: user?.id, forwardEmail: user?.forwardEmail })
+    console.log('User found:', { id: user?.id, forwardEmail: user?.forwardEmail, hasResendKey: !!user?.resendApiKey })
 
     if (!user || !user.forwardEmail) {
       return NextResponse.json({ error: 'User not found or no forward email set' }, { status: 404 })
     }
 
-    // Check if Resend API key is configured
-    if (!process.env.RESEND_API_KEY) {
-      console.error('RESEND_API_KEY not configured')
-      return NextResponse.json({ error: 'Email service not configured' }, { status: 500 })
+    // Check if user has configured their own Resend API key
+    if (!user.resendApiKey) {
+      console.error('User has not configured Resend API key')
+      return NextResponse.json({ 
+        success: false,
+        error: 'Contact form not configured. User needs to add their Resend API key in settings.' 
+      }, { status: 403 })
     }
+
+    // Decrypt the user's Resend API key using their identifiers
+    let decryptedKey: string
+    try {
+      decryptedKey = decryptUserData(user.resendApiKey, user.id, user.clerkId)
+    } catch (error) {
+      console.error('Error decrypting Resend API key:', error)
+      return NextResponse.json({ 
+        success: false,
+        error: 'Failed to decrypt API key. Please reconfigure in settings.' 
+      }, { status: 500 })
+    }
+
+    // Create Resend instance with user's API key
+    const resend = new Resend(decryptedKey)
 
     console.log('Sending email to:', user.forwardEmail)
 
-    // Send email using Resend
+    // Send email using user's Resend API key
     const result = await resend.emails.send({
-      from: 'KraftBeast <contact@buildsforge.com>',
+      from: 'KraftBeast <onboarding@resend.dev>', // Default Resend sender for testing
       to: user.forwardEmail,
       replyTo: email, // Visitor can reply directly to the sender
       subject: `New contact from ${name} via KraftBeast`,
@@ -63,6 +86,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error sending contact:', error)
     return NextResponse.json({ 
+      success: false,
       error: 'Failed to send message', 
       details: error instanceof Error ? error.message : 'Unknown error' 
     }, { status: 500 })
