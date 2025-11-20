@@ -9,16 +9,9 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = await currentUser()
-    const email = user?.emailAddresses[0]?.emailAddress
-
-    if (!email) {
-      return NextResponse.json({ error: 'No email found' }, { status: 400 })
-    }
-
     // Get or create user in database
     let dbUser = await prisma.user.findUnique({
-      where: { email },
+      where: { clerkId: userId },
       include: {
         repos: {
           orderBy: [
@@ -31,6 +24,13 @@ export async function GET() {
     })
 
     if (!dbUser) {
+      const user = await currentUser()
+      const email = user?.emailAddresses[0]?.emailAddress
+      
+      if (!email) {
+        return NextResponse.json({ error: 'No email found' }, { status: 400 })
+      }
+
       dbUser = await prisma.user.create({
         data: {
           clerkId: userId,

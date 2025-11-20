@@ -23,7 +23,7 @@ export default async function DashboardPage() {
   
   // Get or create user in database
   let dbUser = await prisma.user.findUnique({
-    where: { email: user?.emailAddresses[0]?.emailAddress },
+    where: { clerkId: userId },
     include: { 
       repos: { 
         orderBy: [

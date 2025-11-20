@@ -14,7 +14,7 @@ export default async function SettingsPage() {
   const user = await currentUser()
   
   let dbUser = await prisma.user.findUnique({
-    where: { email: user?.emailAddresses[0]?.emailAddress },
+    where: { clerkId: userId },
     include: { 
       repos: { 
         orderBy: { lastPushed: 'desc' } 

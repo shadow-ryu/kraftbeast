@@ -17,7 +17,7 @@ export default async function ProfilePage() {
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let dbUser: any = await (prisma.user.findUnique as any)({
-    where: { email: user?.emailAddresses[0]?.emailAddress },
+    where: { clerkId: userId },
     include: { 
       workHistory: { orderBy: { order: 'asc' } }
     }

@@ -1,4 +1,4 @@
-import { auth, currentUser } from '@clerk/nextjs/server'
+import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { listInstallationRepos, fetchWithInstallationToken } from '@/lib/github-app'
@@ -14,17 +14,14 @@ export async function POST() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = await currentUser()
-    const email = user?.emailAddresses[0]?.emailAddress
-    
-    if (!email) {
-      return NextResponse.json({ error: 'No email found' }, { status: 400 })
-    }
-
     // Get user from database
     const dbUser = await prisma.user.findUnique({
-      where: { email }
+      where: { clerkId: userId }
     })
+
+    if (!dbUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
 
     // Check if user has GitHub App installed (preferred)
     if (dbUser?.githubInstallationId) {
