@@ -1,4 +1,4 @@
-import { auth, currentUser } from '@clerk/nextjs/server'
+import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { listInstallationRepos, fetchWithInstallationToken } from '@/lib/github-app'
@@ -11,46 +11,58 @@ export async function POST() {
   try {
     const { userId } = await auth()
     if (!userId) {
+      console.error('[Sync] Unauthorized: No userId')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = await currentUser()
-    const email = user?.emailAddresses[0]?.emailAddress
-    
-    if (!email) {
-      return NextResponse.json({ error: 'No email found' }, { status: 400 })
-    }
+    console.log(`[Sync] Starting sync for clerkId: ${userId}`)
 
-    // Get user from database with GitHub App installation ID
+    // Get user from database using clerkId
     const dbUser = await prisma.user.findUnique({
-      where: { email }
+      where: { clerkId: userId }
     })
 
     if (!dbUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      console.error('[Sync] User not found in database for clerkId:', userId)
+      return NextResponse.json({ error: 'User not found in database' }, { status: 404 })
     }
 
     const installationId = (dbUser as { githubInstallationId?: string | null })?.githubInstallationId
 
     if (!installationId) {
+      console.error('[Sync] No GitHub App installation ID for user:', dbUser.email)
       return NextResponse.json(
-        { error: 'GitHub App not installed. Please install the GitHub App.' },
+        { error: 'GitHub App not installed. Please install the GitHub App first.' },
         { status: 400 }
       )
     }
 
+    console.log(`[Sync] Installation ID: ${installationId}`)
+
     // Fetch repos from GitHub API using installation token
-    console.log(`Fetching repos for installation ${installationId}...`)
+    console.log(`[Sync] Fetching repos for installation ${installationId}...`)
     const repos = await listInstallationRepos(installationId)
-    console.log(`Found ${repos.length} repositories to sync`)
+    console.log(`[Sync] Found ${repos.length} repositories to sync`)
+
+    if (repos.length === 0) {
+      console.log('[Sync] No repositories found')
+      return NextResponse.json({ 
+        success: true, 
+        synced: 0,
+        errors: 0,
+        total: 0,
+        message: 'No repositories found to sync'
+      })
+    }
 
     let syncedCount = 0
     let errorCount = 0
+    const errors: string[] = []
 
     // Sync repos
     for (const repo of repos) {
       try {
-        console.log(`Syncing repo: ${repo.name}`)
+        console.log(`[Sync] Processing repo: ${repo.name}`)
       // Fetch languages for this repo
       let languages = null
       if (repo.languages_url) {
@@ -63,7 +75,7 @@ export async function POST() {
             languages = await langResponse.json()
           }
         } catch (err) {
-          console.error(`Failed to fetch languages for ${repo.name}:`, err)
+          console.error(`[Sync] Failed to fetch languages for ${repo.name}:`, err)
         }
       }
 
@@ -96,7 +108,7 @@ export async function POST() {
           }
         }
       } catch (err) {
-        console.error(`Failed to fetch commits for ${repo.name}:`, err)
+        console.error(`[Sync] Failed to fetch commits for ${repo.name}:`, err)
       }
 
         await prisma.repo.upsert({
@@ -134,14 +146,16 @@ export async function POST() {
         })
         
         syncedCount++
-        console.log(`✓ Synced ${repo.name} (${syncedCount}/${repos.length})`)
+        console.log(`[Sync] ✓ Synced ${repo.name} (${syncedCount}/${repos.length})`)
       } catch (err) {
         errorCount++
-        console.error(`✗ Failed to sync ${repo.name}:`, err)
+        const errorMsg = err instanceof Error ? err.message : 'Unknown error'
+        errors.push(`${repo.name}: ${errorMsg}`)
+        console.error(`[Sync] ✗ Failed to sync ${repo.name}:`, err)
       }
     }
 
-    console.log(`Sync complete: ${syncedCount} synced, ${errorCount} errors`)
+    console.log(`[Sync] Complete: ${syncedCount} synced, ${errorCount} errors`)
 
     // Update last synced timestamp
     await prisma.user.update({
@@ -164,12 +178,25 @@ export async function POST() {
       success: true, 
       synced: syncedCount,
       errors: errorCount,
-      total: repos.length
+      total: repos.length,
+      errorDetails: errors.length > 0 ? errors : undefined
     })
   } catch (error) {
-    console.error('Sync error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorStack = error instanceof Error ? error.stack : undefined
+    
+    console.error('[Sync] Fatal error:', {
+      message: errorMessage,
+      stack: errorStack,
+      error
+    })
+    
     return NextResponse.json(
-      { error: 'Failed to sync repositories' },
+      { 
+        error: 'Failed to sync repositories',
+        details: errorMessage,
+        hint: 'Check if GitHub App is properly installed and has the correct permissions'
+      },
       { status: 500 }
     )
   }
