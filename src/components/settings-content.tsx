@@ -55,6 +55,9 @@ export default function SettingsContent({ user, repos, workHistory }: SettingsCo
   const [forwardEmail, setForwardEmail] = useState(user.forwardEmail || '')
   const [defaultRepoView, setDefaultRepoView] = useState(user.defaultRepoView || 'readme,files,description')
   const [accentColor, setAccentColor] = useState(user.accentColor || '#3b82f6')
+  const [subdomain, setSubdomain] = useState('')
+  const [subdomainSaving, setSubdomainSaving] = useState(false)
+  const [subdomainMessage, setSubdomainMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [timelinePreset, setTimelinePreset] = useState<string>('90days')
   const [customFrom, setCustomFrom] = useState<string>('')
   const [customTo, setCustomTo] = useState<string>('')
@@ -108,6 +111,52 @@ export default function SettingsContent({ user, repos, workHistory }: SettingsCo
       saveAccentColor(color)
     }, 300)
   }, [saveAccentColor])
+
+  // Fetch current subdomain
+  useEffect(() => {
+    const fetchSubdomain = async () => {
+      try {
+        const response = await fetch('/api/settings/subdomain')
+        if (response.ok) {
+          const data = await response.json()
+          setSubdomain(data.subdomain || '')
+        }
+      } catch (error) {
+        console.error('Error fetching subdomain:', error)
+      }
+    }
+    fetchSubdomain()
+  }, [])
+
+  // Handle subdomain save
+  const handleSaveSubdomain = async () => {
+    setSubdomainSaving(true)
+    setSubdomainMessage(null)
+
+    try {
+      const response = await fetch('/api/settings/subdomain', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subdomain: subdomain.trim() || null })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSubdomainMessage({ 
+          type: 'success', 
+          text: subdomain ? `Subdomain saved! Your portfolio is now at ${data.url}` : 'Subdomain removed'
+        })
+        router.refresh()
+      } else {
+        setSubdomainMessage({ type: 'error', text: data.error || 'Failed to save subdomain' })
+      }
+    } catch (error) {
+      setSubdomainMessage({ type: 'error', text: 'Failed to save subdomain' })
+    } finally {
+      setSubdomainSaving(false)
+    }
+  }
 
   const handleSaveSettings = async () => {
     setIsSaving(true)
@@ -456,6 +505,66 @@ export default function SettingsContent({ user, repos, workHistory }: SettingsCo
               <p className={`text-sm ${saveMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
                 {saveMessage.text}
               </p>
+            )}
+          </div>
+        </Card>
+      </section>
+
+      {/* Custom Subdomain Section */}
+      <section>
+        <Card className="p-6">
+          <h2 className="text-xl font-bold mb-4">Custom Subdomain</h2>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-6">
+            Set a custom subdomain for your portfolio (e.g., john.kraftbeast.com)
+          </p>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="subdomain">Subdomain</Label>
+              <div className="flex gap-2 mt-1">
+                <div className="relative flex-1">
+                  <Input
+                    id="subdomain"
+                    value={subdomain}
+                    onChange={(e) => setSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                    placeholder="your-name"
+                    className="pr-32"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-neutral-500">
+                    .kraftbeast.com
+                  </span>
+                </div>
+                <Button 
+                  onClick={handleSaveSubdomain} 
+                  disabled={subdomainSaving}
+                >
+                  {subdomainSaving ? 'Saving...' : 'Save'}
+                </Button>
+              </div>
+              <p className="text-xs text-neutral-500 mt-2">
+                Use lowercase letters, numbers, and hyphens only (3-63 characters)
+              </p>
+            </div>
+
+            {subdomainMessage && (
+              <p className={`text-sm ${subdomainMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                {subdomainMessage.text}
+              </p>
+            )}
+
+            {subdomain && (
+              <div className="p-4 bg-neutral-50 dark:bg-neutral-800 rounded-lg">
+                <p className="text-sm font-medium mb-1">Your Portfolio URL:</p>
+                <a 
+                  href={`https://${subdomain}.kraftbeast.com`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                >
+                  https://{subdomain}.kraftbeast.com
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
             )}
           </div>
         </Card>

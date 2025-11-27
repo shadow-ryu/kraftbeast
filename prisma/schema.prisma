@@ -40,6 +40,7 @@ model User {
   avatarUrl             String?
   bio                   String?
   githubHandle          String?       @unique
+  subdomain             String?       @unique // Custom subdomain (e.g., "john" for john.kraftbeast.com)
   githubToken           String?       // Legacy OAuth token (deprecated)
   githubConnected       Boolean       @default(false) // Legacy OAuth flag
   githubInstallationId  String?       // GitHub App installation ID

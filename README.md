@@ -101,6 +101,10 @@ cp .env.local.example .env.local
   GITHUB_WEBHOOK_SECRET=your_webhook_secret
   NEXT_PUBLIC_APP_URL=http://localhost:3000
   RESEND_API_KEY=re_your_api_key_here
+  
+  # Inngest (Background Jobs) - Optional for local dev
+  INNGEST_EVENT_KEY=your_inngest_event_key_here
+  INNGEST_SIGNING_KEY=your_inngest_signing_key_here
 
 4. Set up the database:
 ```bash
