@@ -20,6 +20,13 @@ export async function GET(request: NextRequest) {
     const installationId = searchParams.get('installation_id')
     const setupAction = searchParams.get('setup_action')
 
+    console.log('GitHub Callback Params:', { 
+      code: !!code, 
+      error, 
+      installationId, 
+      setupAction 
+    })
+
     if (error) {
       return NextResponse.redirect(
         new URL(`/dashboard?error=${error}`, request.url)
@@ -47,6 +54,7 @@ export async function GET(request: NextRequest) {
     })
 
     const tokenData = await tokenResponse.json()
+    console.log('Token Exchange:', { success: !tokenData.error, error: tokenData.error })
 
     if (tokenData.error) {
       return NextResponse.redirect(
@@ -66,19 +74,23 @@ export async function GET(request: NextRequest) {
     })
 
     const githubUser = await userResponse.json()
+    console.log('GitHub User:', githubUser.login)
 
     // Get installation ID for this user
     let finalInstallationId = installationId
 
     if (!finalInstallationId) {
+      console.log('No installation_id in params, fetching from API...')
       // Try to find the installation
       const installation = await getUserInstallation(userAccessToken)
+      console.log('Fetched Installation:', installation)
       if (installation) {
         finalInstallationId = installation.id.toString()
       }
     }
 
     if (!finalInstallationId) {
+      console.error('Failed to find installation ID')
       return NextResponse.redirect(
         new URL('/dashboard?error=no_installation', request.url)
       )

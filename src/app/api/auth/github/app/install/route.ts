@@ -17,12 +17,13 @@ export async function GET(request: NextRequest) {
   
   // GitHub App installation URL
   const githubAppUrl = new URL(`https://github.com/apps/${process.env.GITHUB_APP_NAME || 'kraftbeast'}/installations/new`)
+  githubAppUrl.searchParams.set('state', userId)
   
   // Alternative: Use the OAuth-like flow for GitHub Apps
-  const githubAuthUrl = new URL('https://github.com/login/oauth/authorize')
-  githubAuthUrl.searchParams.set('client_id', appClientId!)
-  githubAuthUrl.searchParams.set('redirect_uri', redirectUri)
-  githubAuthUrl.searchParams.set('state', userId)
+  // const githubAuthUrl = new URL('https://github.com/login/oauth/authorize')
+  // githubAuthUrl.searchParams.set('client_id', appClientId!)
+  // githubAuthUrl.searchParams.set('redirect_uri', redirectUri)
+  // githubAuthUrl.searchParams.set('state', userId)
 
-  return NextResponse.redirect(githubAuthUrl.toString())
+  return NextResponse.redirect(githubAppUrl.toString())
 }
