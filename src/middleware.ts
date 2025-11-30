@@ -11,7 +11,7 @@ export default clerkMiddleware(async (auth, req) =>{
   const subdomain = getSubdomain(hostname)
   
   // If there's a subdomain and it's not www or api, rewrite to /[username]
-  if (subdomain && subdomain !== 'www' && subdomain !== 'api' && !hostname.includes('localhost')) {
+  if (subdomain && subdomain !== 'www' && subdomain !== 'api' && subdomain !== 'kraftbeast' && !hostname.includes('localhost')) {
     // Don't rewrite if already on a portfolio or API route
     if (!url.pathname.startsWith('/api') && 
         !url.pathname.startsWith('/_next') && 

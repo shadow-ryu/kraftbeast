@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { listInstallationRepos, fetchWithInstallationToken } from '@/lib/github-app'
+import { User } from '@prisma/client'
 
 /**
  * Unified sync route that works with both GitHub App and OAuth (legacy)
@@ -49,8 +50,8 @@ export async function POST() {
 /**
  * Sync using GitHub App installation token (preferred)
  */
-async function syncWithGitHubApp(dbUser: any) {
-  const installationId = dbUser.githubInstallationId
+async function syncWithGitHubApp(dbUser: User) {
+  const installationId = dbUser.githubInstallationId!
 
   // Fetch repos from GitHub API using installation token
   const repos = await listInstallationRepos(installationId)
@@ -146,8 +147,8 @@ async function syncWithGitHubApp(dbUser: any) {
 /**
  * Sync using OAuth token (legacy)
  */
-async function syncWithOAuth(dbUser: any) {
-  const githubToken = dbUser.githubToken
+async function syncWithOAuth(dbUser: User) {
+  const githubToken = dbUser.githubToken!
 
     // Fetch repos from GitHub API
     const response = await fetch('https://api.github.com/user/repos?per_page=100&sort=updated', {
