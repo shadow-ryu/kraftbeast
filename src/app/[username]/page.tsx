@@ -184,28 +184,28 @@ export default async function PortfolioPage({
           <div className="space-y-12">
             {/* Hero Section */}
             <section>
-              <h2 className="text-4xl font-bold mb-4 text-accent">{user.name || username}</h2>
+              <h2 className="text-3xl lg:text-4xl font-bold mb-4 text-accent">{user.name || username}</h2>
               {user.bio && (
-                <p className="text-lg text-neutral-600">{user.bio}</p>
+                <p className="text-base lg:text-lg text-neutral-600">{user.bio}</p>
               )}
             </section>
 
             {/* Work History Section */}
             {user.workHistory.length > 0 && (
               <section>
-                <div className="flex items-center gap-2 mb-6">
-                  <Briefcase className="h-6 w-6 text-accent" />
-                  <h2 className="text-2xl font-bold text-accent">Work History</h2>
+                <div className="flex items-center gap-2 mb-4 lg:mb-6">
+                  <Briefcase className="h-5 w-5 lg:h-6 lg:w-6 text-accent" />
+                  <h2 className="text-xl lg:text-2xl font-bold text-accent">Work History</h2>
                 </div>
                 <div className="space-y-6">
                   {user.workHistory.map((work: { id: string; title: string; company: string; startDate: string; endDate: string | null; bullets: string[] }) => (
                     <Card key={work.id} className="p-6">
-                      <div className="flex justify-between items-start mb-3">
+                      <div className="flex flex-col sm:flex-row justify-between items-start mb-3 gap-1 sm:gap-0">
                         <div>
-                          <h3 className="text-xl font-semibold">{work.title}</h3>
+                          <h3 className="text-lg lg:text-xl font-semibold">{work.title}</h3>
                           <p className="text-neutral-600">{work.company}</p>
                         </div>
-                        <span className="text-sm text-neutral-500">
+                        <span className="text-sm text-neutral-500 whitespace-nowrap">
                           {work.startDate} - {work.endDate || 'Present'}
                         </span>
                       </div>
@@ -228,8 +228,8 @@ export default async function PortfolioPage({
               {user.repos.some((r: { isPinned?: boolean }) => r.isPinned) && (
                 <div className="mb-12">
                   <div className="mb-6">
-                    <h2 className="text-2xl font-bold mb-2 text-accent">📌 Pinned Projects</h2>
-                    <p className="text-neutral-600">
+                    <h2 className="text-xl lg:text-2xl font-bold mb-2 text-accent">📌 Pinned Projects</h2>
+                    <p className="text-neutral-600 text-sm lg:text-base">
                       Highlighted work
                     </p>
                   </div>
@@ -253,8 +253,8 @@ export default async function PortfolioPage({
 
               {/* All Projects */}
               <div className="mb-6">
-                <h2 className="text-2xl font-bold mb-2 text-accent">All Projects</h2>
-                <p className="text-neutral-600">
+                <h2 className="text-xl lg:text-2xl font-bold mb-2 text-accent">All Projects</h2>
+                <p className="text-neutral-600 text-sm lg:text-base">
                   Automatically synced from GitHub
                 </p>
               </div>
@@ -287,9 +287,9 @@ export default async function PortfolioPage({
 
             {/* Activity Timeline Section */}
             <section>
-              <div className="flex items-center gap-2 mb-6">
-                <Clock className="h-6 w-6 text-accent" />
-                <h2 className="text-2xl font-bold text-accent">Activity Timeline</h2>
+              <div className="flex items-center gap-2 mb-4 lg:mb-6">
+                <Clock className="h-5 w-5 lg:h-6 lg:w-6 text-accent" />
+                <h2 className="text-xl lg:text-2xl font-bold text-accent">Activity Timeline</h2>
               </div>
               {timeline.length > 0 ? (
                 <Card className="p-6">
@@ -336,9 +336,9 @@ export default async function PortfolioPage({
             {/* Contact Section */}
             {user.forwardEmail && user.resendApiKey && (
               <section>
-                <div className="flex items-center gap-2 mb-6">
-                  <Mail className="h-6 w-6 text-accent" />
-                  <h2 className="text-2xl font-bold text-accent">Get in Touch</h2>
+                <div className="flex items-center gap-2 mb-4 lg:mb-6">
+                  <Mail className="h-5 w-5 lg:h-6 lg:w-6 text-accent" />
+                  <h2 className="text-xl lg:text-2xl font-bold text-accent">Get in Touch</h2>
                 </div>
                 <ContactForm username={username} />
               </section>

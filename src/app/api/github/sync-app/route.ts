@@ -40,7 +40,7 @@ export async function POST() {
     console.log(`[Sync] Installation ID: ${installationId}`)
 
     // Trigger Inngest job for background processing
-    await inngest.send({
+    const { ids } = await inngest.send({
       name: 'repo/sync.requested',
       data: {
         userId: dbUser.id,
@@ -49,12 +49,13 @@ export async function POST() {
       }
     })
 
-    console.log('[Sync] Background job triggered successfully')
+    console.log('[Sync] Background job triggered successfully:', ids[0])
 
     return NextResponse.json({ 
       success: true, 
       message: 'Sync started in background. This may take a few moments.',
-      status: 'processing'
+      status: 'processing',
+      jobId: ids[0]
     })
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'

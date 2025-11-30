@@ -54,23 +54,23 @@ export default function RepoCard({ repo, githubHandle, defaultTab = 'readme' }: 
         className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
         onClick={handleCardClick}
       >
-        <div className="flex justify-between items-start mb-3">
-          <div className="flex items-center gap-2">
-            <h3 className="text-xl font-semibold">{repo.name}</h3>
+        <div className="flex flex-col sm:flex-row justify-between items-start mb-3 gap-2 sm:gap-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-lg lg:text-xl font-semibold break-all">{repo.name}</h3>
             {repo.isPrivate && (
-              <Badge variant="outline" className="flex items-center gap-1 text-xs">
+              <Badge variant="outline" className="flex items-center gap-1 text-xs whitespace-nowrap">
                 <span>👾</span>
                 Private
               </Badge>
             )}
             {repo.isFork && (
-              <Badge variant="outline" className="flex items-center gap-1 text-xs bg-gray-50 text-gray-600 border-gray-300">
+              <Badge variant="outline" className="flex items-center gap-1 text-xs bg-gray-50 text-gray-600 border-gray-300 whitespace-nowrap">
                 <span>🍴</span>
                 Forked
               </Badge>
             )}
           </div>
-          <Badge variant="secondary" className="flex items-center gap-1">
+          <Badge variant="secondary" className="flex items-center gap-1 whitespace-nowrap self-start">
             <Star className="h-3 w-3 fill-current" />
             {repo.stars}
           </Badge>
