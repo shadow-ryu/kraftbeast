@@ -225,6 +225,24 @@ export default function SettingsContent({ user, repos, workHistory }: SettingsCo
   const publicRepos = repos.filter(r => !r.isPrivate)
   const privateRepos = repos.filter(r => r.isPrivate)
 
+  const handleDisconnect = async () => {
+    if (!confirm('Are you sure you want to disconnect GitHub? This will stop updates to your portfolio.')) return
+
+    try {
+      const response = await fetch('/api/auth/github/disconnect', {
+        method: 'POST',
+      })
+
+      if (response.ok) {
+        router.refresh()
+      } else {
+        console.error('Failed to disconnect')
+      }
+    } catch (error) {
+      console.error('Error disconnecting:', error)
+    }
+  }
+
   return (
     <div className="space-y-8">
       {/* Repository Visibility Section */}
@@ -365,7 +383,14 @@ export default function SettingsContent({ user, repos, workHistory }: SettingsCo
                       size="sm"
                       onClick={() => window.location.href = '/api/auth/github/app/install'}
                     >
-                      Reconnect
+                      Reinstall App
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      onClick={handleDisconnect}
+                    >
+                      Disconnect
                     </Button>
                   </>
                 ) : (

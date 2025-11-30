@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server'
 
 const isProtectedRoute = createRouteMatcher(['/dashboard(.*)'])
 
+const RESERVED_SUBDOMAINS = ['www', 'api', 'kraftbeast']
+const IGNORED_PATHS = ['/api', '/_next', '/dashboard', '/sign-in', '/sign-up']
+
 export default clerkMiddleware(async (auth, req) =>{
   const url = req.nextUrl
   const hostname = req.headers.get('host') || ''
@@ -10,15 +13,12 @@ export default clerkMiddleware(async (auth, req) =>{
   // Get the subdomain (e.g., "john" from "john.kraftbeast.com")
   const subdomain = getSubdomain(hostname)
   
-  // If there's a subdomain and it's not www or api, rewrite to /[username]
-  if (subdomain && subdomain !== 'www' && subdomain !== 'api' && subdomain !== 'kraftbeast' && !hostname.includes('localhost')) {
+  // If there's a subdomain and it's not reserved, rewrite to /[username]
+  if (subdomain && !RESERVED_SUBDOMAINS.includes(subdomain) && !hostname.includes('localhost')) {
     // Don't rewrite if already on a portfolio or API route
-    if (!url.pathname.startsWith('/api') && 
-        !url.pathname.startsWith('/_next') && 
-        !url.pathname.startsWith('/dashboard') &&
-        !url.pathname.startsWith('/sign-in') &&
-        !url.pathname.startsWith('/sign-up')) {
-      
+    const isIgnoredPath = IGNORED_PATHS.some(path => url.pathname.startsWith(path))
+    
+    if (!isIgnoredPath) {
       // Rewrite subdomain.kraftbeast.com to kraftbeast.com/subdomain
       url.pathname = `/${subdomain}${url.pathname === '/' ? '' : url.pathname}`
       return NextResponse.rewrite(url)

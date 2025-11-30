@@ -22,8 +22,18 @@ export function generateGitHubAppJWT(): string {
     throw new Error('GitHub App credentials not configured')
   }
 
-  // Replace escaped newlines with actual newlines
-  const key = privateKey.replace(/\\n/g, '\n')
+  // Clean the private key
+  let key = privateKey.replace(/\\n/g, '\n')
+  
+  // Remove surrounding quotes if they exist (common issue with some env injections)
+  if (key.startsWith('"') && key.endsWith('"')) {
+    key = key.slice(1, -1)
+  }
+  if (key.startsWith("'") && key.endsWith("'")) {
+    key = key.slice(1, -1)
+  }
+  
+  key = key.trim()
 
   const now = Math.floor(Date.now() / 1000)
   

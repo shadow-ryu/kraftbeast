@@ -251,13 +251,13 @@ npx prisma migrate dev --name migration_name
 - [x] README parsing
 - [x] Activity timeline
 - [x] Accent color customization
+- [X] Historical commit fetching
 - [x] Data export
 
 ### Coming Soon 🚧
 - [ ] LinkedIn OAuth integration
 - [ ] Webhook retry background job
 - [ ] Thumbnail upload UI
-- [ ] Historical commit fetching
 - [ ] Custom domains
 - [ ] Advanced analytics with charts
 - [ ] Team portfolios

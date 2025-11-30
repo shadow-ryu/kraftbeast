@@ -13,6 +13,10 @@ function verifySignature(payload: string, signature: string, secret: string): bo
  * Handles push events and installation events
  * Works with both OAuth (legacy) and GitHub App installations
  */
+export async function GET() {
+  return NextResponse.json({ message: 'GitHub Webhook Endpoint is active' })
+}
+
 export async function POST(request: NextRequest) {
   try {
     const payload = await request.text()
