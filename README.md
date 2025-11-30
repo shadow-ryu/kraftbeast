@@ -162,7 +162,7 @@ KraftBeast uses Vercel Cron for scheduled syncing. This is configured in `vercel
 
 ### Contact Form Setup
 
-KraftBeast supports two modes for contact forms:
+KraftBeast supports per-user Resend API key management with user-bound encryption:
 
 #### For Hosted Users (Recommended)
 Each user provides their own Resend API key for email forwarding:
@@ -170,24 +170,21 @@ Each user provides their own Resend API key for email forwarding:
 1. Get your Resend API key from [resend.com/api-keys](https://resend.com/api-keys) (100 emails/day free)
 2. Go to Dashboard → Settings → Contact Form
 3. Enter your key and save
-4. Your key is encrypted with AES-256-GCM and stored securely in the database
+4. Your key is encrypted with AES-256-GCM using your unique user identifiers
 5. Once active, the "Contact Me" section will appear on your public portfolio
 
 **Security Features:**
-- Keys are encrypted at rest using server-side AES-256-GCM
+- Keys are encrypted at rest using AES-256-GCM with user-bound encryption
+- Each user's key is encrypted using their unique userId and clerkId
 - Decrypted only at runtime when sending emails
 - Never returned to frontend once stored
-- Uses environment-stored `ENCRYPTION_SECRET` for consistent encryption/decryption
+- No shared encryption secret required - each user's key is unique
 
 #### For Self-Hosted (Legacy)
 Set a global `RESEND_API_KEY` in your environment variables. This will be used for all users if they haven't configured their own key.
 
-**Environment Variables Required:**
+**Environment Variables:**
 ```bash
-# Encryption key for storing per-user Resend API keys
-# Generate with: openssl rand -base64 32
-ENCRYPTION_SECRET=your_32_byte_random_secret_here
-
 # Optional: Global Resend key for self-hosted (legacy)
 RESEND_API_KEY=re_your_api_key_here
 ```

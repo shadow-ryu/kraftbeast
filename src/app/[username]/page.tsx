@@ -16,10 +16,9 @@ export default async function PortfolioPage({
 }) {
   const { username } = await params
   
-  // Try to find user by subdomain first, then fall back to githubHandle
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let user: any = await (prisma.user.findUnique as any)({
-    where: { subdomain: username },
+  const user: any = await (prisma.user.findUnique as any)({
+    where: { githubHandle: username },
     include: { 
       repos: { 
         where: { 
@@ -36,29 +35,6 @@ export default async function PortfolioPage({
       }
     }
   })
-
-  // If not found by subdomain, try githubHandle (backward compatibility)
-  if (!user) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    user = await (prisma.user.findUnique as any)({
-      where: { githubHandle: username },
-      include: { 
-        repos: { 
-          where: { 
-            isVisible: true 
-          },
-          orderBy: [
-            { isPinned: 'desc' },
-            { pinnedOrder: 'asc' },
-            { lastPushed: 'desc' }
-          ]
-        },
-        workHistory: {
-          orderBy: { order: 'asc' }
-        }
-      }
-    })
-  }
 
   if (!user) notFound()
 
