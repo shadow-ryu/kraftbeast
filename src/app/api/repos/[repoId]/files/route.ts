@@ -51,7 +51,8 @@ export async function GET(
         return NextResponse.json(
           { 
             error: 'Failed to authenticate with GitHub',
-            details: 'GitHub App installation may need to be refreshed. Try reconnecting your GitHub account.'
+            details: 'GitHub App installation may need to be refreshed. Try reconnecting your GitHub account.',
+            debug: error instanceof Error ? error.message : String(error)
           },
           { status: 500 }
         )

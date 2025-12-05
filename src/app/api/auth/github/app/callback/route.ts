@@ -1,7 +1,7 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getUserInstallation } from '@/lib/github-app'
+import { getUserInstallation, getInstallationToken } from '@/lib/github-app'
 
 /**
  * Handle GitHub App installation callback
@@ -93,6 +93,17 @@ export async function GET(request: NextRequest) {
       console.error('Failed to find installation ID')
       return NextResponse.redirect(
         new URL('/dashboard?error=no_installation', request.url)
+      )
+    }
+
+    // Verify we can generate a token for this installation
+    // This checks if the App ID and Private Key are correct and the installation is valid
+    try {
+      await getInstallationToken(finalInstallationId!)
+    } catch (error) {
+      console.error('Installation verification failed:', error)
+      return NextResponse.redirect(
+        new URL('/dashboard?error=verification_failed', request.url)
       )
     }
 
